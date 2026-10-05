@@ -75,3 +75,20 @@ test("ChatGPT-plan requests ask for low reasoning but never send sampling fields
   assert.deepEqual(calls[0].reasoning, { effort: "low" });
   assert.equal(calls[0].max_output_tokens, undefined);
 });
+
+test("the feedback request can ask for more reasoning and a longer answer, defaults stay for tips", async (t) => {
+  const calls = stubFetch(t, () => ok());
+  const run = (o: Parameters<typeof createOpenAIBrain>[0]) =>
+    createOpenAIBrain(o)({ instructions: "Coach", input: "ME: hoi", signal: new AbortController().signal, onDelta: () => {} });
+  await run({ model: "fb-plan", getToken: async () => "tok", planUsage: true, reasoningEffort: "medium", verbosity: "medium" });
+  assert.deepEqual(calls[0].reasoning, { effort: "medium" });
+  assert.deepEqual(calls[0].text, { verbosity: "medium" });
+  assert.equal(calls[0].max_output_tokens, undefined, "never a sampling field on the plan");
+  await run({ model: "fb-key", getToken: async () => "sk", planUsage: false, reasoningEffort: "low", maxOutputTokens: 4000 });
+  assert.deepEqual(calls[1].reasoning, { effort: "low" });
+  assert.equal(calls[1].max_output_tokens, 4000);
+  await run({ model: "fb-default", getToken: async () => "sk", planUsage: false });
+  assert.deepEqual(calls[2].reasoning, { effort: "none" });
+  assert.deepEqual(calls[2].text, { verbosity: "low" });
+  assert.equal(calls[2].max_output_tokens, 200);
+});

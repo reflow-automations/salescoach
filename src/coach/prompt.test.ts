@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EMPTY_PROFILE, type Profile } from "../shared/types";
-import { PASS, TipCleaner, buildInput, buildInstructions, cleanTip, languageName, passVerdict, profileToText } from "./prompt";
+import { PASS, TipCleaner, buildInput, buildInstructions, cleanTip, languageName, passVerdict, playbookFor, profileToText } from "./prompt";
 
 const LABELS: Record<keyof Profile, string> = {
   whoAmI: "### Who I am and what I can do",
@@ -189,3 +189,102 @@ for (const [text, ended, want] of VERDICTS) {
     assert.equal(passVerdict(text, ended), want);
   });
 }
+
+// ---------- still speaking ----------
+
+test("buildInput marks an unfinished last THEM line with (still speaking)", () => {
+  const s = buildInput(
+    [
+      { speaker: "them", text: "Eerste punt.", partial: true },
+      { speaker: "me", text: "Ja?" },
+      { speaker: "them", text: "Dat vind ik best", partial: true },
+    ],
+    "auto",
+    { stillSpeaking: true },
+  );
+  assert.ok(s.includes("THEM: Dat vind ik best (still speaking)"), s);
+  assert.ok(s.includes("THEM: Eerste punt.\n"), "only the last THEM line is marked");
+});
+
+test("buildInput only marks (still speaking) for a draft request", () => {
+  const lines = [{ speaker: "them" as const, text: "Dat vind ik best", partial: true }];
+  assert.ok(!buildInput(lines, "auto").includes("(still speaking)"), "a normal auto request");
+  assert.ok(!buildInput(lines, "hotkey").includes("(still speaking)"), "a hotkey request");
+  assert.ok(buildInput(lines, "auto", { stillSpeaking: true }).includes("(still speaking)"), "a draft request");
+});
+
+test("buildInput does not mark a finished THEM line or an unfinished ME line", () => {
+  const s = buildInput(
+    [
+      { speaker: "them", text: "Dat vind ik te duur." },
+      { speaker: "me", text: "Waarmee vergelijk je", partial: true },
+    ],
+    "auto",
+    { stillSpeaking: true },
+  );
+  assert.ok(!s.includes("(still speaking)"), s);
+});
+
+test("buildInstructions explains (still speaking): anticipate and keep it short", () => {
+  const s = buildInstructions(EMPTY_PROFILE, "", "en");
+  assert.ok(s.includes("(still speaking) is not finished yet"));
+  assert.ok(s.includes("anticipate where the sentence is going"));
+  assert.ok(s.includes("extra short"));
+});
+
+// ---------- kind of call ----------
+
+test("buildInstructions without a call type is a sales call with the sales playbook", () => {
+  const s = buildInstructions(EMPTY_PROFILE, "", "en");
+  assert.equal(s, buildInstructions(EMPTY_PROFILE, "", "en", "sales"));
+  assert.ok(s.includes("the seller, labelled ME"));
+  assert.ok(s.includes("# Sales playbook for a live call coach"));
+  assert.ok(!s.includes("# Job interview playbook"));
+  assert.ok(s.includes("an objection, a buying signal"));
+});
+
+test("buildInstructions for a job interview: candidate and interviewer, interview playbook, structure hints", () => {
+  const s = buildInstructions(EMPTY_PROFILE, "Vacature: AI-specialist, 32 uur.", "nl", "interview");
+  assert.ok(s.includes("the candidate, labelled ME"), s);
+  assert.ok(s.includes("during a Dutch job interview"));
+  assert.ok(s.includes("the interviewer, labelled THEM"));
+  assert.ok(s.includes("# Job interview playbook"));
+  assert.ok(!s.includes("# Sales playbook"));
+  assert.ok(!s.includes("seller"));
+  assert.ok(s.includes("Every real interview question deserves a short structure hint"));
+  assert.ok(s.includes(`Smalltalk, introductions and THEM explaining the company or the role get ${PASS}`));
+  assert.ok(s.includes("## Brief for this call (the vacancy and the user's key points)\nVacature: AI-specialist, 32 uur."));
+  assert.ok(s.includes("This profile was written for sales calls"));
+});
+
+test("buildInstructions for a meeting: participant, meeting playbook, decisions and owners", () => {
+  const s = buildInstructions(EMPTY_PROFILE, "", "en", "meeting");
+  assert.ok(s.includes("a participant, labelled ME"));
+  assert.ok(s.includes("during an English meeting."), s.slice(0, 300));
+  assert.ok(s.includes("# Meeting playbook"));
+  assert.ok(!s.includes("# Sales playbook"));
+  assert.ok(s.includes("a decision, an owner and a date"));
+  assert.ok(s.includes("## Brief for this call (agenda and goals)\n(none)"));
+});
+
+test("every call type keeps the shared rules: format, AUTO PASS, HOTKEY, still speaking, no inventing", () => {
+  for (const type of ["sales", "interview", "meeting"] as const) {
+    const s = buildInstructions(EMPTY_PROFILE, "", "en", type);
+    assert.ok(s.includes("## Output format (strict)"), type);
+    assert.ok(s.includes(`answer exactly ${PASS} and nothing else`), type);
+    assert.ok(s.includes("For a HOTKEY request always give a tip, never PASS."), type);
+    assert.ok(s.includes("(still speaking) is not finished yet"), type);
+    assert.match(s, /Only use facts/, type);
+    assert.match(s, /## 7\. Things to never do|## 6\. Things to never do/, type);
+    assert.doesNotMatch(s, /[\u2013\u2014]/, `${type}: no em or en dash`);
+  }
+});
+
+test("playbookFor gives each call type its own playbook", () => {
+  assert.ok(playbookFor("sales").startsWith("# Sales playbook"));
+  assert.ok(playbookFor("interview").startsWith("# Job interview playbook"));
+  assert.ok(playbookFor("meeting").startsWith("# Meeting playbook"));
+  assert.match(playbookFor("interview"), /range first/);
+  assert.match(playbookFor("interview"), /STAR/);
+  assert.match(playbookFor("meeting"), /owner/);
+});

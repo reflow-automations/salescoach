@@ -13,6 +13,12 @@ export interface OpenAIBrainOptions {
   planUsage: boolean;
   /** Language of our own error texts ("en" or "nl"). Default English. */
   language?: string;
+  /** Default: "low" with the ChatGPT plan, "none" with an API key (fast live tips). */
+  reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
+  /** Default "low" (short tips). */
+  verbosity?: "low" | "medium" | "high";
+  /** Cap with an API key, default 200. The ChatGPT plan rejects this field, so it is never sent there. */
+  maxOutputTokens?: number;
 }
 
 // Models that proved to reject the speed knobs. Module level, because main builds
@@ -33,10 +39,10 @@ export function createOpenAIBrain(o: OpenAIBrainOptions): Brain {
       };
       if (withKnobs) {
         // Without these a ChatGPT model thinks for seconds before the first word.
-        b.reasoning = { effort: o.planUsage ? "low" : "none" };
-        b.text = { verbosity: "low" };
+        b.reasoning = { effort: o.reasoningEffort ?? (o.planUsage ? "low" : "none") };
+        b.text = { verbosity: o.verbosity ?? "low" };
         // The plan flow rejects sampling fields such as max_output_tokens.
-        if (!o.planUsage) b.max_output_tokens = 200;
+        if (!o.planUsage) b.max_output_tokens = o.maxOutputTokens ?? 200;
       }
       return JSON.stringify(b);
     };

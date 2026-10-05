@@ -333,5 +333,157 @@
     ],
     "expect": "Antwoordt PASS: neutrale instemming tijdens de uitleg, niets om op te reageren.",
     "shouldPass": true
+  },
+  {
+    "id": "nog-bezig-overleg",
+    "category": "nog bezig",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Zullen we dan volgende week starten met de eerste maand?" },
+      { "speaker": "them", "text": "Ja, klinkt goed, alleen moet ik dit eerst nog even met mijn compagnon", "partial": true }
+    ],
+    "expect": "Loopt vooruit op 'eerst overleggen': vraagt kort wat de compagnon belangrijk vindt of stelt een gezamenlijk gesprek voor. Kort, max 10 woorden.",
+    "shouldPass": false
+  },
+  {
+    "id": "nog-bezig-smalltalk",
+    "category": "nog bezig",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Hoe was je vakantie?" },
+      { "speaker": "them", "text": "Ja heerlijk, we zijn twee weken in Italië geweest en het weer was", "partial": true }
+    ],
+    "expect": "Antwoordt PASS: smalltalk die nog niet af is, niets om op te reageren.",
+    "shouldPass": true
+  },
+  {
+    "id": "sollicitatie-over-jezelf",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Fijn dat je er bent vandaag." },
+      { "speaker": "them", "text": "Om te beginnen: vertel eens wat over jezelf?" }
+    ],
+    "expect": "Geeft een opbouw: wat ik nu doe in één zin, één resultaat met een cijfer (6 uur per week), dan waarom deze rol. Kort.",
+    "shouldPass": false
+  },
+  {
+    "id": "sollicitatie-voorbeeld",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "Ik bouw de automatiseringen meestal zelf, van intake tot oplevering." },
+      { "speaker": "them", "text": "Kun je een voorbeeld geven van een project waar iets misging, en wat jij toen deed?" }
+    ],
+    "expect": "Stelt één kort STAR-voorbeeld voor: situatie in een zin, wat ik deed, het resultaat. Neemt de fout op zich en laat zien wat er veranderde. Geen verzonnen feiten.",
+    "shouldPass": false
+  },
+  {
+    "id": "sollicitatie-salaris",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Voordat we afronden moet ik het ook even vragen." },
+      { "speaker": "them", "text": "Aan wat voor salaris had je gedacht voor deze rol?" }
+    ],
+    "expect": "Vraagt eerst naar hun range; als ze doorvragen, noemt de voorbereide range 4.800 tot 5.400 bruto. Nooit een bedrag buiten de briefing.",
+    "shouldPass": false
+  },
+  {
+    "id": "sollicitatie-uren",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "De functie is normaal fulltime, dus 40 uur per week." },
+      { "speaker": "them", "text": "Hoe kijk jij daartegenaan?" }
+    ],
+    "expect": "Noemt de wens van 32 uur rustig als feit, niet als excuus, en vraagt hoe dat in het team werkt.",
+    "shouldPass": false
+  },
+  {
+    "id": "sollicitatie-eigen-vragen",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Goed, dat was het van mijn kant." },
+      { "speaker": "them", "text": "Heb jij nog vragen voor ons?" }
+    ],
+    "expect": "Stelt een voorbereide vraag: wanneer ben ik na een half jaar succesvol, of wat zijn de volgende stappen. Nooit 'geen vragen'.",
+    "shouldPass": false
+  },
+  {
+    "id": "sollicitatie-smalltalk",
+    "category": "sollicitatie",
+    "callType": "interview",
+    "brief": "Sollicitatiegesprek voor Automation Specialist bij Noordveld Logistiek (fictief). Vacature: 32 tot 40 uur, hybride met 2 kantoordagen, salaris in de advertentie 4.200 tot 5.200 bruto per maand. Mijn punten: 3 jaar automatiseringen bouwen voor kleine bedrijven; beste voorbeeld: een factuurflow die een klant 6 uur per week bespaart; ik wil 32 uur; mijn range is 4.800 tot 5.400 bruto. Mijn vragen: wanneer ben ik na een half jaar succesvol, en wat zijn de volgende stappen.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Goedemorgen, leuk je te ontmoeten." },
+      { "speaker": "them", "text": "Insgelijks. Kon je het kantoor een beetje vinden? Parkeren is hier altijd een puzzel." }
+    ],
+    "expect": "Antwoordt PASS: smalltalk voordat het gesprek begint.",
+    "shouldPass": true
+  },
+  {
+    "id": "overleg-wie",
+    "category": "overleg",
+    "callType": "meeting",
+    "brief": "Wekelijks projectoverleg over een nieuwe website voor een klant (fictief). Doel: kiezen welke hostingpartij we nemen en afspreken wie de content bijwerkt voor de lancering op 1 december.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Dus de klantenlijst moet voor de lancering bijgewerkt zijn." },
+      { "speaker": "them", "text": "Ja, dat moet echt gebeuren. Iemand moet dat oppakken." }
+    ],
+    "expect": "Vraagt wie het oppakt en voor wanneer, of biedt aan het zelf te doen met een datum. Eén eigenaar, niet 'we'.",
+    "shouldPass": false
+  },
+  {
+    "id": "overleg-meningsverschil",
+    "category": "overleg",
+    "callType": "meeting",
+    "brief": "Wekelijks projectoverleg over een nieuwe website voor een klant (fictief). Doel: kiezen welke hostingpartij we nemen en afspreken wie de content bijwerkt voor de lancering op 1 december.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Mijn voorstel is dat we de lanceringscontent eerst naar de nieuwe hosting zetten." },
+      { "speaker": "them", "text": "Eerlijk gezegd denk ik niet dat dat werkt. Vorig jaar probeerden we zoiets en dat liep op niets uit." }
+    ],
+    "expect": "Blijft rustig: laat eerst begrip zien of vraagt wat er vorig jaar misging, daarna wat het nu wel laat werken.",
+    "shouldPass": false
+  },
+  {
+    "id": "overleg-besluit",
+    "category": "overleg",
+    "callType": "meeting",
+    "brief": "Wekelijks projectoverleg over een nieuwe website voor een klant (fictief). Doel: kiezen welke hostingpartij we nemen en afspreken wie de content bijwerkt voor de lancering op 1 december.",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "We hebben dus twee opties, de goedkopere partij of de snellere." },
+      { "speaker": "them", "text": "We blijven hier maar rondjes over draaien." }
+    ],
+    "expect": "Vat de twee opties samen en vraagt nu om een besluit, of spreekt af wie voor wanneer beslist.",
+    "shouldPass": false
+  },
+  {
+    "id": "overleg-smalltalk",
+    "category": "overleg",
+    "callType": "meeting",
+    "brief": "Wekelijks projectoverleg over een nieuwe website voor een klant (fictief). Doel: kiezen welke hostingpartij we nemen en afspreken wie de content bijwerkt voor de lancering op 1 december.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Sorry, ik ben een minuutje te laat, het vorige gesprek liep uit." },
+      { "speaker": "me", "text": "Geen probleem, we zijn net begonnen." }
+    ],
+    "expect": "Antwoordt PASS: een praktische opmerking aan het begin, niets om bij te sturen.",
+    "shouldPass": true
   }
 ]

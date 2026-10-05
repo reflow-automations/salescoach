@@ -333,5 +333,157 @@
     ],
     "expect": "Answers PASS: neutral agreement during the explanation, nothing to react to.",
     "shouldPass": true
+  },
+  {
+    "id": "still-speaking-decision",
+    "category": "still speaking",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "So shall we start with the first month next week?" },
+      { "speaker": "them", "text": "Yes, sounds good, only I need to run this by my business partner", "partial": true }
+    ],
+    "expect": "Anticipates 'I need to check with my partner': briefly asks what the partner cares about or suggests a call together. Short, max 10 words.",
+    "shouldPass": false
+  },
+  {
+    "id": "still-speaking-smalltalk",
+    "category": "still speaking",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "How was your holiday?" },
+      { "speaker": "them", "text": "Lovely, we spent two weeks in Italy and the weather was", "partial": true }
+    ],
+    "expect": "Answers PASS: smalltalk that is not finished yet, nothing to react to.",
+    "shouldPass": true
+  },
+  {
+    "id": "interview-about-yourself",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Thanks for joining us today." },
+      { "speaker": "them", "text": "To start, could you tell me a bit about yourself?" }
+    ],
+    "expect": "Gives a structure: what I do now in one sentence, one result with a number (6 hours a week), then why this role. Short.",
+    "shouldPass": false
+  },
+  {
+    "id": "interview-example",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "I mostly build the automations myself, from intake to delivery." },
+      { "speaker": "them", "text": "Can you give me an example of a project where something went wrong, and what you did?" }
+    ],
+    "expect": "Suggests one short STAR example: situation in a sentence, what I did, the result. Own the mistake, show what changed. No invented facts.",
+    "shouldPass": false
+  },
+  {
+    "id": "interview-salary",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Before we wrap up, I also need to ask." },
+      { "speaker": "them", "text": "What kind of salary did you have in mind for this role?" }
+    ],
+    "expect": "Asks for their range first; if pushed, names the prepared range 4,800 to 5,400 gross. Never a number outside the brief.",
+    "shouldPass": false
+  },
+  {
+    "id": "interview-hours",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "The role is normally full time, so 40 hours a week." },
+      { "speaker": "them", "text": "How does that work for you?" }
+    ],
+    "expect": "States the wish for 32 hours calmly as a fact, not an apology, and asks how that works in the team.",
+    "shouldPass": false
+  },
+  {
+    "id": "interview-own-questions",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Alright, that was everything from my side." },
+      { "speaker": "them", "text": "Do you have any questions for us?" }
+    ],
+    "expect": "Asks a prepared question: what success looks like after six months, or what the next steps are. Never 'no questions'.",
+    "shouldPass": false
+  },
+  {
+    "id": "interview-smalltalk",
+    "category": "interview",
+    "callType": "interview",
+    "brief": "Job interview for Automation Specialist at Northfield Logistics (fictional). Vacancy: 32 to 40 hours, hybrid with 2 office days, salary in the ad 4,200 to 5,200 gross per month. My points: 3 years building automations for small businesses; best example: an invoice flow that saved a client 6 hours a week; I want 32 hours; my range is 4,800 to 5,400 gross. My questions: what does success look like after six months, and what are the next steps.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Good morning, nice to meet you." },
+      { "speaker": "them", "text": "Likewise. Did you find the office alright? Parking can be a bit of a puzzle here." }
+    ],
+    "expect": "Answers PASS: smalltalk before the interview starts.",
+    "shouldPass": true
+  },
+  {
+    "id": "meeting-owner",
+    "category": "meeting",
+    "callType": "meeting",
+    "brief": "Weekly project meeting about a new website for a client (fictional). Goal: decide on the hosting supplier and agree who updates the content before the launch on 1 December.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "So the client list has to be updated before the launch." },
+      { "speaker": "them", "text": "Yes, that really needs to happen. Someone should pick that up." }
+    ],
+    "expect": "Asks who picks it up and by when, or offers to take it with a date. One owner, not 'we'.",
+    "shouldPass": false
+  },
+  {
+    "id": "meeting-disagreement",
+    "category": "meeting",
+    "callType": "meeting",
+    "brief": "Weekly project meeting about a new website for a client (fictional). Goal: decide on the hosting supplier and agree who updates the content before the launch on 1 December.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "My proposal is that we move the launch content to the new hosting first." },
+      { "speaker": "them", "text": "Honestly, I don't think that works. We tried something like that last year and it went nowhere." }
+    ],
+    "expect": "Stays calm: first shows understanding or asks what worried them last time, then what would make it work now.",
+    "shouldPass": false
+  },
+  {
+    "id": "meeting-decision",
+    "category": "meeting",
+    "callType": "meeting",
+    "brief": "Weekly project meeting about a new website for a client (fictional). Goal: decide on the hosting supplier and agree who updates the content before the launch on 1 December.",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "So we have two options on the table, the cheaper supplier or the faster one." },
+      { "speaker": "them", "text": "We keep going round in circles on this." }
+    ],
+    "expect": "Summarises the two options and asks for the decision now, or agrees who decides by when.",
+    "shouldPass": false
+  },
+  {
+    "id": "meeting-smalltalk",
+    "category": "meeting",
+    "callType": "meeting",
+    "brief": "Weekly project meeting about a new website for a client (fictional). Goal: decide on the hosting supplier and agree who updates the content before the launch on 1 December.",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Sorry I'm a minute late, the previous call ran over." },
+      { "speaker": "me", "text": "No problem, we just started." }
+    ],
+    "expect": "Answers PASS: a practical remark at the start, nothing to steer.",
+    "shouldPass": true
   }
 ]

@@ -3,8 +3,8 @@
 // Usage: npx electron scripts/shots.cjs <variant> [--dark] [--scale=2] [--lang nl]
 //   Build first: node scripts/preview-build.mjs <variant>   (or: npm run shots -- <variant>)
 //   Light (default): every overlay scene at 560x210, overlay tip-done at 380x150 ("narrow"),
-//                    every settings scene at 760x820.
-//   --dark:          only the settings scenes plus overlay tip-done, with the OS theme forced to dark.
+//                    every settings scene at 760x820, every feedback scene at 720x860.
+//   --dark:          only the settings scenes, feedback done and overlay tip-done, with the OS theme forced to dark.
 //   --scale=N:       device scale factor of the PNGs (default 1, so the PNG is exactly the window size).
 //   --lang nl:       the pages in Dutch (also --lang=nl). Default English, which is also the app's default.
 // Output: design/shots/<variant>/<page>-<scene>[-narrow][-dark][-nl].png  (English has no language suffix)
@@ -53,6 +53,10 @@ function jobs() {
     list.push({ page: "overlay", scene: "tip-done", size: sizes.overlay, file: `overlay-tip-done${suffix}.png` });
   }
   for (const s of scenes.settings) list.push({ page: "settings", scene: s.name, size: sizes.settings, file: `settings-${s.name}${suffix}.png` });
+  for (const s of scenes.feedback) {
+    if (dark && s.name !== "done") continue;
+    list.push({ page: "feedback", scene: s.name, size: sizes.feedback, file: `feedback-${s.name}${suffix}.png` });
+  }
   return list;
 }
 

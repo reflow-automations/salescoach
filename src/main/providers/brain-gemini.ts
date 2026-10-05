@@ -4,6 +4,12 @@ import { errorFrom, readSse, rejectsKnob, type Brain } from "./brain";
 export interface GeminiBrainOptions {
   model: string;
   apiKey: string;
+  /** Default true: thinkingLevel "minimal", so a live tip starts fast. False lets the model think as usual. */
+  minimalThinking?: boolean;
+  /** Default 200 (a short tip). */
+  maxOutputTokens?: number;
+  /** Default 0.4. */
+  temperature?: number;
 }
 
 // Models that proved to reject thinkingLevel (Gemini 2.x). Module level, because
@@ -12,10 +18,10 @@ const knobRejected = new Set<string>();
 
 export function createGeminiBrain(o: GeminiBrainOptions): Brain {
   return async ({ instructions, input, signal, onDelta }) => {
-    const withKnob = !knobRejected.has(o.model);
+    const withKnob = o.minimalThinking !== false && !knobRejected.has(o.model);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(o.model)}:streamGenerateContent?alt=sse`;
     const body = (withKnob: boolean) => {
-      const generationConfig: Record<string, unknown> = { maxOutputTokens: 200, temperature: 0.4 };
+      const generationConfig: Record<string, unknown> = { maxOutputTokens: o.maxOutputTokens ?? 200, temperature: o.temperature ?? 0.4 };
       if (withKnob) generationConfig.thinkingConfig = { thinkingLevel: "minimal" };
       return JSON.stringify({
         systemInstruction: { parts: [{ text: instructions }] },

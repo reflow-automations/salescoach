@@ -2,9 +2,9 @@
 
 The unit tests (`npm test`) check the code. This eval checks the model: does a real excerpt from a sales call get a useful tip, and does the coach stay quiet during small talk?
 
-The eval sends 30 excerpts from sales calls (B2B services) to the model, with the same instructions and the same input as the app. For each excerpt it measures the speed, runs a few automatic checks and writes everything to a report in which you fill in your verdict per tip.
+The eval sends 42 excerpts to the model: 32 from sales calls (B2B services), 6 from job interviews and 4 from meetings, with the same instructions and the same input as the app. For each excerpt it measures the speed, runs a few automatic checks and writes everything to a report in which you fill in your verdict per tip.
 
-There are two sets with the same 30 situations, the same categories and the same structure:
+There are two sets with the same 42 situations, the same categories and the same structure:
 
 | `EVAL_LANG` | Cases | Example profile | Language of the tips |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ The key set this way only lives in this PowerShell window. Close the window and 
 
 If the profile file does not exist, the eval runs with an empty profile and says so. Tips about prices, cases and lead times then get more general, and that is exactly what you want to see: does the model make anything up?
 
-The cases run one by one, with a pause in between, so you stay within the limits of a free Gemini key. If a case still gets a 429 (too many requests), the eval waits 20 seconds and tries once more. 30 cases take about three minutes this way.
+The cases run one by one, with a pause in between, so you stay within the limits of a free Gemini key. If a case still gets a 429 (too many requests), the eval waits 20 seconds and tries once more. 42 cases take about four minutes this way.
 
 ## What the checks mean
 
@@ -84,6 +84,8 @@ Every run writes a new file to `evals/results/`, for example `eval-2026-10-04T14
 The excerpts are in `evals/cases.en.json` (English) and `evals/cases.json` (Dutch). Each case has:
 
 - `id` and `category`
+- `callType` (optional): `sales` (the default when it is missing), `interview` (you are the candidate) or `meeting`. It picks the playbook and the roles in the instructions, like the setting in the app.
+- `brief` (optional): the brief for this call, as you would type it in the app. For a job interview that is the vacancy and your own points.
 - `trigger`: `auto` (the coach decides by itself and may say `PASS`) or `hotkey` (you pressed the hotkey)
 - `lines`: the call so far, with `speaker` `me` (you) or `them` (the customer)
 - `expect`: one sentence on what a good tip does

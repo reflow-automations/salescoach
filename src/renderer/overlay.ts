@@ -3,7 +3,7 @@
 // All text comes from src/shared/i18n.ts in the language of the settings, and follows a change live.
 import type { CoachApi } from "../main/preload";
 import { MESSAGES, normLang, t, type Lang, type MessageKey } from "../shared/i18n";
-import type { PublicSettingsState, Settings, StatusEvent, TipEvent, TranscriptEvent } from "../shared/types";
+import { normCallType, type CallType, type PublicSettingsState, type Settings, type StatusEvent, type TipEvent, type TipLabel, type TranscriptEvent } from "../shared/types";
 import { startCapture, type Capture } from "./capture";
 import { applyI18n } from "./i18n-dom";
 
@@ -18,16 +18,22 @@ function el<T extends HTMLElement = HTMLElement>(id: string): T {
 const listenBtn = el<HTMLButtonElement>("listen");
 const tipBtn = el<HTMLButtonElement>("tipBtn");
 const autoBox = el<HTMLInputElement>("auto");
+const callTypeSel = el<HTMLSelectElement>("callType");
 const statusEl = el("status");
 const edge = el("edge");
 const tipEl = el("tip");
+const historyEl = el("history");
 const transcriptEl = el("transcript");
 const transcriptBtn = el<HTMLButtonElement>("transcriptBtn");
 const settingsBtn = el<HTMLButtonElement>("settingsBtn");
 const hideBtn = el<HTMLButtonElement>("hideBtn");
+const afterCall = el("afterCall");
+const feedbackBtn = el<HTMLButtonElement>("feedbackBtn");
+const callLengthEl = el("callLength");
 
 const OLD_AFTER_MS = 25_000;
 const MAX_TRANSCRIPT_LINES = 8;
+const MAX_HISTORY = 3;
 const ERROR_HOLD_MS = 3_000;
 const WARN_RECOVER_MS = 5_000;
 
@@ -101,7 +107,23 @@ function setListenState(next: ListenState): void {
   listenBtn.classList.toggle("quiet", next === "listening" || next === "stopping");
   listenBtn.title = tr(next === "listening" ? "overlay.stopTitle" : "overlay.startTitle");
   if (showingEmpty) showEmpty();
+  renderAfterCall();
 }
+
+// ---------- after the call ----------
+
+/** Length in minutes of the call that just ended, when it is long enough for feedback; 0 hides the button. */
+let feedbackCallMinutes = 0;
+
+function renderAfterCall(): void {
+  afterCall.hidden = !feedbackCallMinutes || listenState !== "stopped";
+  document.body.classList.toggle("call-ended", !afterCall.hidden);
+  callLengthEl.textContent = feedbackCallMinutes ? tr("overlay.callLength", { n: feedbackCallMinutes }) : "";
+}
+
+feedbackBtn.addEventListener("click", () => {
+  void Promise.resolve(coach.openFeedback()).catch((err: unknown) => showTipMessage(errorText(err), "error"));
+});
 
 /** Starting failed: a short label up top, the full message (with what to do) where the tip goes. */
 function fail(message: string): void {
@@ -114,6 +136,7 @@ async function start(): Promise<void> {
   if (listenState !== "stopped") return;
   setListenState("starting");
   holdErrorUntil = 0;
+  clearHistory(); // a new call starts with a clean list
   setStatus({ key: "overlay.starting" }, "stopped");
 
   let res: { ok: boolean; error?: string };
@@ -141,6 +164,8 @@ async function start(): Promise<void> {
     fail(errorText(err));
     return;
   }
+  // Only now: when starting fails, the button for the previous call stays.
+  feedbackCallMinutes = 0;
   setListenState("listening");
 }
 
@@ -179,6 +204,9 @@ coach.onStatus((payload) => {
     setListenState("stopped");
     settleTip();
   }
+  // Main says with every stop whether there is a call long enough for feedback.
+  if (!s.listening && s.feedback !== undefined) feedbackCallMinutes = s.feedback ? Math.max(1, s.callMinutes ?? 1) : 0;
+  renderAfterCall();
   const level = s.level ?? "info";
   if (!s.listening && level === "info" && Date.now() < holdErrorUntil) return;
   const dotFor: DotLevel = level === "error" ? "error" : level === "warn" ? "warn" : s.listening ? "listening" : "stopped";
@@ -187,8 +215,26 @@ coach.onStatus((payload) => {
 
 // ---------- tips ----------
 
+/** The tip on top and the few before it, so a tip that was replaced can still be read. */
+interface TipEntry {
+  id: string;
+  text: string;
+  label?: TipLabel;
+  at: number;
+  /** THEM was still talking when it came: it may still be refined. */
+  draft: boolean;
+}
+
 let currentTipId: string | null = null;
 let tipText = "";
+/** Label, time and draft state of the tip on top (its text is tipText). Null for a message or the empty state. */
+let current: TipEntry | null = null;
+/** Earlier tips, newest first. */
+let history: TipEntry[] = [];
+/** A refinement of the tip on top started: its first words replace the old text, so nothing flickers. */
+let replacing = false;
+/** The tip a refinement is replacing, until its first words arrive: it goes to the history if the refinement fails. */
+let replacedTip: TipEntry | null = null;
 let oldTimer: number | undefined;
 /** True while the tip area shows the empty-state hint instead of a tip or an error. */
 let showingEmpty = true;
@@ -196,7 +242,15 @@ let showingEmpty = true;
 function armOldTimer(): void {
   window.clearTimeout(oldTimer);
   tipEl.classList.remove("old");
-  oldTimer = window.setTimeout(() => tipEl.classList.add("old"), OLD_AFTER_MS);
+  oldTimer = window.setTimeout(() => {
+    tipEl.classList.add("old");
+    // An old tip is no longer "still listening".
+    if (current?.draft) {
+      current.draft = false;
+      tipEl.classList.remove("draft");
+      if (tipText) renderTip();
+    }
+  }, OLD_AFTER_MS);
 }
 
 /** Line 1 is the tip; a line starting with "? " is a question to ask. */
@@ -235,6 +289,15 @@ function renderTip(): void {
   const mainEl = document.createElement("div");
   mainEl.className = "tip-main";
   mainEl.replaceChildren(...sentenceNodes(main));
+  if (current?.draft && main) {
+    // A small dot says: THEM is still talking, this tip may still change.
+    const dot = document.createElement("span");
+    dot.className = "listening-dot";
+    dot.title = tr("overlay.draftTitle");
+    dot.setAttribute("role", "img");
+    dot.setAttribute("aria-label", tr("overlay.draftTitle"));
+    mainEl.prepend(dot);
+  }
   const nodes: HTMLElement[] = [mainEl];
   if (question) {
     const q = document.createElement("div");
@@ -245,11 +308,80 @@ function renderTip(): void {
   tipEl.replaceChildren(...nodes);
 }
 
+/** The tip on top moves into the history (only a tip with text). */
+function archiveCurrent(): void {
+  const top = current;
+  if (top && currentTipId === top.id && tipText.trim()) {
+    history = [{ ...top, text: tipText, draft: false }, ...history.filter((h) => h.id !== top.id)].slice(0, MAX_HISTORY);
+  }
+  current = null;
+  renderHistory();
+}
+
+function ageText(at: number): string {
+  const seconds = Math.max(0, Math.round((Date.now() - at) / 1000));
+  return seconds < 60 ? tr("overlay.ageSeconds", { n: seconds }) : tr("overlay.ageMinutes", { n: Math.floor(seconds / 60) });
+}
+
+function renderHistory(): void {
+  const rows = history.map((h) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "hist-row";
+    row.dataset.id = h.id;
+    row.title = tr("overlay.historyRestore");
+    row.setAttribute("role", "listitem");
+    if (h.label) {
+      const label = document.createElement("span");
+      label.className = "hist-label";
+      label.textContent = tr(`tipLabel.${h.label}`);
+      row.append(label);
+    }
+    const text = document.createElement("span");
+    text.className = "hist-text";
+    text.textContent = splitTip(h.text).main || h.text;
+    const age = document.createElement("span");
+    age.className = "hist-age";
+    age.dataset.at = String(h.at);
+    age.textContent = ageText(h.at);
+    row.append(text, age);
+    row.addEventListener("click", () => restoreTip(h.id));
+    return row;
+  });
+  historyEl.replaceChildren(...rows);
+}
+
+function renderAges(): void {
+  for (const age of historyEl.querySelectorAll<HTMLElement>(".hist-age")) age.textContent = ageText(Number(age.dataset.at));
+}
+
+/** A tip from the history goes back on top; the tip that was there takes its place in the list. */
+function restoreTip(id: string): void {
+  const entry = history.find((h) => h.id === id);
+  if (!entry) return;
+  history = history.filter((h) => h.id !== id);
+  archiveCurrent();
+  current = { ...entry, draft: false };
+  currentTipId = entry.id;
+  tipText = entry.text;
+  replacing = false;
+  tipEl.className = "tip complete";
+  renderTip();
+  armOldTimer();
+}
+
+function clearHistory(): void {
+  history = [];
+  renderHistory();
+}
+
 /** What the tip area says when there is no tip: it follows the real state. */
 function emptyMessage(): string {
   const key = prettyHotkey(settings?.hotkeyHelp ?? "Ctrl+Shift+Space");
   if (listenState === "listening" || listenState === "stopping") {
-    return tr(settings?.autoTips === false ? "overlay.emptyManual" : "overlay.emptyAuto", { key });
+    if (settings?.autoTips === false) return tr("overlay.emptyManual", { key });
+    const auto: Record<CallType, MessageKey> = { sales: "overlay.emptyAuto", interview: "overlay.emptyAutoInterview", meeting: "overlay.emptyAutoMeeting" };
+    return tr(auto[normCallType(settings?.callType)], { key });
   }
   return tr("overlay.emptyIdle", { key });
 }
@@ -257,7 +389,10 @@ function emptyMessage(): string {
 function showEmpty(): void {
   window.clearTimeout(oldTimer);
   currentTipId = null;
+  current = null;
   tipText = "";
+  replacing = false;
+  replacedTip = null;
   showingEmpty = true;
   tipEl.className = "tip muted";
   tipEl.textContent = emptyMessage();
@@ -266,7 +401,9 @@ function showEmpty(): void {
 function showTipMessage(message: string, kind: "error" | "muted"): void {
   window.clearTimeout(oldTimer);
   currentTipId = null;
+  current = null;
   tipText = "";
+  replacing = false;
   showingEmpty = false;
   tipEl.className = `tip ${kind}`;
   const text = document.createElement("span");
@@ -287,10 +424,16 @@ function showTipMessage(message: string, kind: "error" | "muted"): void {
   if (kind === "error") armOldTimer();
 }
 
-/** A running tip was cancelled (stop): finish it visually. */
+/** A running tip was cancelled (stop): finish it visually. A draft tip is no longer waiting either. */
 function settleTip(): void {
+  replacing = false;
+  if (current?.draft) {
+    current.draft = false;
+    tipEl.classList.remove("draft");
+    if (tipText.trim()) renderTip();
+  }
   if (!tipEl.classList.contains("live")) return;
-  tipEl.classList.remove("live", "pending");
+  tipEl.classList.remove("live", "pending", "refine");
   if (!tipText.trim()) showEmpty();
   else armOldTimer();
 }
@@ -298,15 +441,40 @@ function settleTip(): void {
 coach.onTip((payload) => {
   const e = payload as TipEvent;
   switch (e.kind) {
-    case "start":
+    case "start": {
+      // A refinement of the tip on top (same sentence of THEM) swaps the text in place.
+      const refine = !!e.replaces && e.replaces === currentTipId && !!current && !!tipText.trim();
+      const label = e.label ?? (refine ? current?.label : undefined);
+      replacedTip = refine && current ? { ...current, text: tipText, draft: false } : null;
+      if (!refine) archiveCurrent();
+      current = { id: e.id, text: "", label, at: Date.now(), draft: !!e.draft };
       currentTipId = e.id;
-      tipText = "";
-      tipEl.className = `tip live pending ${e.trigger}`;
+      replacing = refine;
+      if (refine) {
+        tipEl.className = `tip live refine ${e.trigger}${e.draft ? " draft" : ""}`;
+      } else {
+        tipText = "";
+        tipEl.className = `tip live pending ${e.trigger}${e.draft ? " draft" : ""}`;
+      }
       renderTip();
       armOldTimer();
       break;
+    }
     case "delta":
-      if (e.id !== currentTipId) return;
+      if (e.id !== currentTipId) {
+        // A tip that was moved into the history while it still streamed keeps growing there.
+        const h = history.find((x) => x.id === e.id);
+        if (h) {
+          h.text += e.text;
+          renderHistory();
+        }
+        return;
+      }
+      if (replacing) {
+        tipText = "";
+        replacing = false;
+        replacedTip = null;
+      }
       tipText += e.text;
       tipEl.classList.remove("pending");
       renderTip();
@@ -314,20 +482,45 @@ coach.onTip((payload) => {
       break;
     case "done":
       if (e.id !== currentTipId) return;
-      tipEl.classList.remove("live", "pending");
+      replacing = false;
+      tipEl.classList.remove("live", "pending", "refine");
       tipEl.classList.add("complete");
       if (!tipText.trim()) showEmpty();
       else armOldTimer();
       break;
+    case "final":
+      // THEM finished and the draft tip still fits: it stays, now as a normal tip.
+      if (e.id !== currentTipId || !current?.draft) return;
+      current.draft = false;
+      tipEl.classList.remove("draft");
+      if (tipText.trim()) renderTip();
+      break;
     case "skip":
       // The coach decided there was nothing worth saying: keep the previous tip.
       break;
+    case "retract":
+      // A draft tip the coach no longer stands behind (the full sentence did not call for it): it
+      // leaves the screen and is not kept in the history either.
+      history = history.filter((h) => h.id !== e.id);
+      renderHistory();
+      if (e.id === currentTipId) showEmpty();
+      break;
     case "error":
+      if (e.id !== currentTipId) archiveCurrent();
+      else if (replacing && replacedTip?.text.trim()) {
+        // A refinement failed before its first word: the tip it was replacing stays readable.
+        const old = replacedTip;
+        history = [old, ...history.filter((h) => h.id !== old.id)].slice(0, MAX_HISTORY);
+        renderHistory();
+      }
+      replacedTip = null;
       showTipMessage(e.message, "error");
       currentTipId = e.id;
       break;
   }
 });
+
+window.setInterval(renderAges, 1000);
 
 tipBtn.addEventListener("click", () => {
   void Promise.resolve(coach.requestTip()).catch((err: unknown) => showTipMessage(errorText(err), "error"));
@@ -341,6 +534,9 @@ function applySettings(s: Settings): void {
   settings = s;
   autoBox.checked = !!s.autoTips;
   autoBox.disabled = false;
+  callTypeSel.value = normCallType(s.callType);
+  callTypeSel.disabled = false;
+  fitCallType();
   const next = normLang(s.language);
   if (next !== lang) {
     lang = next;
@@ -359,10 +555,14 @@ function renderHotkeyTitles(): void {
 /** Puts every text of the window in the current language, without touching what it shows. */
 function applyLanguage(): void {
   applyI18n(lang);
+  fitCallType();
   setListenState(listenState);
   renderStatus();
   renderTranscriptButton();
   renderHotkeyTitles();
+  renderHistory();
+  renderAfterCall();
+  if (tipText.trim()) renderTip();
 }
 
 autoBox.disabled = true;
@@ -374,6 +574,35 @@ autoBox.addEventListener("change", async () => {
     if (st?.settings) applySettings(st.settings);
   } catch (err) {
     autoBox.checked = !wanted;
+    setStatus({ text: tr("common.saveFailed", { error: errorText(err) }) }, "warn");
+  }
+});
+
+/** A select is as wide as its longest option; this one fits the chosen option, so the chevron sits right after it. */
+function fitCallType(): void {
+  const text = callTypeSel.selectedOptions[0]?.textContent ?? "";
+  const cs = getComputedStyle(callTypeSel);
+  if (!text) return;
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!ctx) return;
+  ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const chrome = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+  callTypeSel.style.width = `${Math.ceil(ctx.measureText(text).width + chrome) + 1}px`;
+}
+
+// The kind of call applies to the next tip and to the feedback; the ears keep running.
+callTypeSel.disabled = true;
+callTypeSel.addEventListener("change", fitCallType);
+void document.fonts?.ready.then(fitCallType);
+callTypeSel.addEventListener("change", async () => {
+  if (!settings) return;
+  const before = normCallType(settings.callType);
+  const wanted = normCallType(callTypeSel.value);
+  try {
+    const st = (await coach.saveSettings({ ...settings, callType: wanted })) as PublicSettingsState | undefined;
+    if (st?.settings) applySettings(st.settings);
+  } catch (err) {
+    callTypeSel.value = before;
     setStatus({ text: tr("common.saveFailed", { error: errorText(err) }) }, "warn");
   }
 });

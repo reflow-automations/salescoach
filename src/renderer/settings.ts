@@ -3,19 +3,24 @@
 // Stored keys are never shown; the renderer only learns whether one is set.
 // All text comes from src/shared/i18n.ts. A language change re-renders the text live and never
 // touches the value of a field, so nothing you are typing gets lost.
+import { smartestModel } from "../coach/feedback";
 import type { ImportResult } from "../coach/profile-import";
 import type { CoachApi } from "../main/preload";
 import { joinList, normLang, t, type Lang, type MessageKey } from "../shared/i18n";
 import {
   DEFAULT_SETTINGS,
   EMPTY_PROFILE,
+  normCallType,
   type BrainProviderId,
+  type CallType,
   type ChatGPTStatus,
   type EarsProviderId,
+  type FeedbackBrainId,
   type Profile,
   type PublicSettingsState,
   type SecretName,
   type Settings,
+  FEEDBACK_DEFAULT_MODELS,
 } from "../shared/types";
 import { applyI18n } from "./i18n-dom";
 
@@ -168,9 +173,17 @@ const readyDetail = el("readyDetail");
 const moreOptions = el<HTMLDetailsElement>("moreOptions");
 const stepState = { conn: el("stepConn"), profile: el("stepProfile"), call: el("stepCall") };
 const languageSel = el<HTMLSelectElement>("language");
+const callTypeSel = el<HTMLSelectElement>("callType");
 const autoTipsBox = el<HTMLInputElement>("autoTips");
+const tipsWhileSpeakingBox = el<HTMLInputElement>("tipsWhileSpeaking");
 const geminiModelInput = el<HTMLInputElement>("geminiModel");
 const openaiModelInput = el<HTMLInputElement>("openaiModel");
+const feedbackBrainSel = el<HTMLSelectElement>("feedbackBrain");
+const feedbackModelField = el("feedbackModelField");
+const feedbackModelLabel = el<HTMLLabelElement>("feedbackModelLabel");
+const feedbackModelInput = el<HTMLInputElement>("feedbackModel");
+const feedbackModelCg = el<HTMLSelectElement>("feedbackModelCg");
+const feedbackHint = el("feedbackHint");
 const hkHelp = el("hkHelp");
 const hkToggle = el("hkToggle");
 const saveSettingsBtn = el<HTMLButtonElement>("saveSettings");
@@ -220,24 +233,64 @@ function renderForm(s: Settings): void {
   brainSel.value = s.brain;
   ensureOption(languageSel, s.language);
   languageSel.value = s.language;
+  renderCallType(s);
   autoTipsBox.checked = s.autoTips;
+  renderTipsWhileSpeaking(s);
   geminiModelInput.value = s.geminiModel;
   geminiModelInput.placeholder = DEFAULT_SETTINGS.geminiModel;
   openaiModelInput.value = s.openaiModel;
   openaiModelInput.placeholder = DEFAULT_SETTINGS.openaiModel;
   hkHelp.textContent = prettyHotkey(s.hotkeyHelp);
   hkToggle.textContent = prettyHotkey(s.hotkeyToggle);
+  feedbackBrainSel.value = s.feedbackBrain || "same";
+  feedbackModelInput.value = s.feedbackBrain === "gemini" || s.feedbackBrain === "openai-key" ? (s.feedbackModel ?? "") : "";
+}
+
+/** The kind of call, and the brief placeholder that fits it (a job interview asks for the vacancy). */
+function renderCallType(s: Settings): void {
+  const type = normCallType(s.callType);
+  callTypeSel.value = type;
+  const placeholders: Record<CallType, MessageKey> = {
+    sales: "call.briefPlaceholder",
+    interview: "call.briefPlaceholderInterview",
+    meeting: "call.briefPlaceholderMeeting",
+  };
+  briefInput.dataset.i18nPlaceholder = placeholders[type];
+  briefInput.placeholder = tr(placeholders[type]);
+}
+
+/** "While they talk" only means something with automatic tips on. */
+function renderTipsWhileSpeaking(s: Settings): void {
+  tipsWhileSpeakingBox.checked = s.tipsWhileSpeaking !== false;
+  tipsWhileSpeakingBox.disabled = !s.autoTips;
+}
+
+autoTipsBox.addEventListener("change", () => (tipsWhileSpeakingBox.disabled = !autoTipsBox.checked));
+
+/** The feedback model as the form shows it. Each provider has its own field, so a name never crosses providers. */
+function collectFeedback(base: Settings): Pick<Settings, "feedbackBrain" | "feedbackModel"> {
+  const feedbackBrain = (feedbackBrainSel.value || "same") as FeedbackBrainId;
+  if (feedbackBrain === "gemini" || feedbackBrain === "openai-key") return { feedbackBrain, feedbackModel: feedbackModelInput.value.trim() };
+  if (feedbackBrain === "chatgpt") {
+    const picked = state.chatgpt.connected && !feedbackModelCg.disabled ? feedbackModelCg.value : "";
+    return { feedbackBrain, feedbackModel: picked || (base.feedbackBrain === "chatgpt" ? base.feedbackModel : "") };
+  }
+  return { feedbackBrain, feedbackModel: "" };
 }
 
 function collectSettings(): Settings {
   const base = state.settings;
   const chatgptModel = state.chatgpt.connected && cgModelSel.value ? cgModelSel.value : base.chatgptModel;
   return {
+    // base first: the freshly picked feedback provider and model must win over the stored ones.
     ...base,
+    ...collectFeedback(base),
     ears: earsSel.value as EarsProviderId,
     brain: brainSel.value as BrainProviderId,
     language: languageSel.value || base.language,
+    callType: normCallType(callTypeSel.value || base.callType),
     autoTips: autoTipsBox.checked,
+    tipsWhileSpeaking: tipsWhileSpeakingBox.checked,
     geminiModel: geminiModelInput.value.trim() || DEFAULT_SETTINGS.geminiModel,
     openaiModel: openaiModelInput.value.trim() || DEFAULT_SETTINGS.openaiModel,
     chatgptModel,
@@ -339,6 +392,55 @@ function renderStatus(): void {
   brainHint.textContent = hints[s.brain] ? tr(hints[s.brain]) : "";
 
   renderChatGPT();
+  renderFeedbackModel();
+}
+
+let renderedFeedbackModels = "";
+
+/** "After the call": the model field fits the chosen provider, the hint says what it uses or misses. */
+function renderFeedbackModel(): void {
+  const which = (feedbackBrainSel.value || "same") as FeedbackBrainId;
+  const s = state.settings;
+  const cg = state.chatgpt;
+  const useCg = which === "chatgpt";
+  feedbackModelField.hidden = which === "same";
+  feedbackModelInput.hidden = useCg;
+  feedbackModelCg.hidden = !useCg;
+  feedbackModelLabel.htmlFor = useCg ? "feedbackModelCg" : "feedbackModel";
+
+  let hint = "";
+  let warn = false;
+  if (which === "same") {
+    hint = tr("conn.feedbackHint.same");
+  } else if (which === "gemini" || which === "openai-key") {
+    const gemini = which === "gemini";
+    const model = gemini ? FEEDBACK_DEFAULT_MODELS.gemini : FEEDBACK_DEFAULT_MODELS.openai;
+    feedbackModelInput.placeholder = model;
+    feedbackModelInput.setAttribute("list", gemini ? "models-gemini" : "models-openai");
+    hint = tr(gemini ? "conn.feedbackHint.gemini" : "conn.feedbackHint.openaiKey", { model });
+    const key: SecretName = gemini ? "geminiKey" : "openaiKey";
+    if (!state.hasSecret[key]) {
+      hint += ` ${tr("conn.feedbackHint.noKey", { label: tr(gemini ? "label.geminiKey" : "label.openaiKey") })}`;
+      warn = true;
+    }
+  } else {
+    const usable = cg.connected && cg.sharing && cg.models.length > 0;
+    const current = (s.feedbackBrain === "chatgpt" && s.feedbackModel) || (usable ? smartestModel(cg.models) : "");
+    const key = JSON.stringify([cg.models, current, usable, lang]);
+    if (key !== renderedFeedbackModels) {
+      renderedFeedbackModels = key;
+      const options = cg.models.map((m) => new Option(m.displayName || m.slug, m.slug));
+      if (!options.length) options.push(new Option(tr(cg.connected && !cg.sharing ? "cg.enableFirst" : "cg.noModels"), ""));
+      feedbackModelCg.replaceChildren(...options);
+      if (current && usable) ensureOption(feedbackModelCg, current);
+      feedbackModelCg.value = current || feedbackModelCg.options[0]?.value || "";
+      feedbackModelCg.disabled = !usable;
+    }
+    hint = tr(cg.connected && cg.sharing ? "conn.feedbackHint.chatgpt" : "conn.feedbackHint.chatgptOff");
+    warn = !(cg.connected && cg.sharing);
+  }
+  feedbackHint.textContent = hint;
+  feedbackHint.classList.toggle("warn", warn);
 }
 
 let renderedModels = "";
@@ -383,6 +485,7 @@ async function saveSettings(feedback: boolean): Promise<void> {
     else state = { ...state, settings: next };
     syncLanguage();
     renderStatus();
+    renderCallType(state.settings);
     if (feedback) setMsg(settingsMsg, tr("common.saved"), "ok");
   } catch (err) {
     setMsg(settingsMsg, tr("common.saveFailed", { error: errorText(err) }), "error");
@@ -391,7 +494,7 @@ async function saveSettings(feedback: boolean): Promise<void> {
 
 /** Fast models first: a live tip is useless when it arrives after the moment has passed. */
 export function fastestModel(models: { slug: string }[]): string {
-  const fast = models.find((m) => /mini|nano|instant|fast|flash|lite/i.test(m.slug));
+  const fast = models.find((m) => /luna|mini|nano|instant|fast|flash|lite/i.test(m.slug));
   return (fast ?? models[0]).slug;
 }
 
@@ -404,12 +507,20 @@ async function ensureChatGPTModel(): Promise<void> {
 }
 
 // Selects and the checkbox save immediately; text fields save when you leave them.
-for (const control of [earsSel, brainSel, languageSel, autoTipsBox, cgModelSel]) {
+for (const control of [earsSel, brainSel, languageSel, callTypeSel, autoTipsBox, tipsWhileSpeakingBox, cgModelSel]) {
   control.addEventListener("change", () => void saveSettings(true));
 }
-for (const input of [geminiModelInput, openaiModelInput]) {
+for (const input of [geminiModelInput, openaiModelInput, feedbackModelInput, feedbackModelCg]) {
   input.addEventListener("change", () => void saveSettings(true));
 }
+// Another provider for the feedback starts with its own default model, never the name typed for the previous one.
+feedbackBrainSel.addEventListener("change", () => {
+  feedbackModelInput.value = "";
+  state = { ...state, settings: { ...state.settings, feedbackBrain: feedbackBrainSel.value as FeedbackBrainId, feedbackModel: "" } };
+  renderedFeedbackModels = "";
+  renderFeedbackModel();
+  void saveSettings(true);
+});
 brainSel.addEventListener("change", renderStatus);
 // The ChatGPT plan cannot transcribe. Without an OpenAI key, the free Gemini ears are the only way to listen.
 brainSel.addEventListener("change", () => {
@@ -723,10 +834,12 @@ async function init(): Promise<void> {
   }
 }
 
-// "auto" can also be switched in the overlay. Pick that up so a save here does not undo it.
+// "auto" and the kind of call can also be switched in the overlay. Pick that up so a save here does not undo it.
 function applyExternalSettings(s: Settings): void {
   state = { ...state, settings: s };
   autoTipsBox.checked = s.autoTips;
+  renderCallType(s);
+  renderTipsWhileSpeaking(s);
   if (languageSel.value !== s.language) {
     ensureOption(languageSel, s.language);
     languageSel.value = s.language;
@@ -746,6 +859,8 @@ window.addEventListener("focus", () => {
       const st = (await coach.getState()) as PublicSettingsState;
       state = { ...st, settings: { ...state.settings, ...st.settings } };
       autoTipsBox.checked = st.settings.autoTips;
+      renderTipsWhileSpeaking(st.settings);
+      renderCallType(st.settings);
       syncLanguage();
       renderStatus();
     } catch {
@@ -755,3 +870,27 @@ window.addEventListener("focus", () => {
 });
 
 void init();
+
+// Suggestions for the model fields, fetched with the stored keys: new models appear without an app update.
+async function loadModelSuggestions(): Promise<void> {
+  for (const provider of ["gemini", "openai"] as const) {
+    let ids: string[] = [];
+    try {
+      ids = await coach.listModels(provider);
+    } catch {
+      ids = [];
+    }
+    const id = `models-${provider}`;
+    let list = document.getElementById(id) as HTMLDataListElement | null;
+    if (!list) {
+      list = document.createElement("datalist");
+      list.id = id;
+      document.body.append(list);
+    }
+    list.replaceChildren(...ids.map((m) => Object.assign(document.createElement("option"), { value: m })));
+  }
+  geminiModelInput.setAttribute("list", "models-gemini");
+  openaiModelInput.setAttribute("list", "models-openai");
+}
+void loadModelSuggestions();
+window.addEventListener("focus", () => void loadModelSuggestions());

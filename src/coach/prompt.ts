@@ -1,6 +1,8 @@
 // Builds the instructions (system prompt) and the per-request input for the brain.
-import playbook from "./playbook.md";
-import type { Profile, Speaker } from "../shared/types";
+import salesPlaybook from "./playbook.md";
+import interviewPlaybook from "./playbook-interview.md";
+import meetingPlaybook from "./playbook-meeting.md";
+import type { CallType, Profile, Speaker } from "../shared/types";
 
 export const PASS = "PASS";
 
@@ -28,42 +30,129 @@ export function profileToText(p: Profile): string {
   return parts.length ? parts.join("\n\n") : "(The user has not filled in a profile yet. Give general but concrete sales advice.)";
 }
 
-export function buildInstructions(profile: Profile, callBrief: string, language: string): string {
+/** "an English call", "a Dutch call". */
+function article(word: string): string {
+  return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
+/** What changes in the instructions per kind of call. Everything else (format, PASS, HOTKEY) is shared. */
+interface CallTypeText {
+  role: (lang: string) => string;
+  /** When an AUTO request deserves a tip; otherwise PASS. */
+  autoRule: string;
+  choose: string[];
+  facts: string;
+  /** A note under the profile heading: the profile is written for sales calls. */
+  profileNote?: string;
+  briefHeading: string;
+  playbook: string;
+}
+
+const CALL_TYPE_TEXT: Record<CallType, CallTypeText> = {
+  sales: {
+    role: (lang) =>
+      `You are a live sales coach whispering to the user (the seller, labelled ME) during ${article(lang)} ${lang} sales call. The other party is labelled THEM.`,
+    autoRule: `- If you get an AUTO request and THEM did not raise an objection, a buying signal, a direct question or an important fact, answer exactly ${PASS} and nothing else.`,
+    choose: ["- Follow the playbook below. Prefer a question over a pitch. Prefer short over complete."],
+    facts:
+      "- Only use facts, prices, cases and promises from the profile and the call brief. If the user would need information you do not have, suggest they say they will check and follow up by email.",
+    briefHeading: "## Brief for this call",
+    playbook: salesPlaybook,
+  },
+  interview: {
+    role: (lang) =>
+      `You are a live interview coach whispering to the user (the candidate, labelled ME) during ${article(lang)} ${lang} job interview. The other party is the interviewer, labelled THEM.`,
+    autoRule: [
+      `- If you get an AUTO request and THEM did not ask a real question, probe deeper, voice a doubt about the candidate, or bring up salary, hours, terms or the next step, answer exactly ${PASS} and nothing else.`,
+      `- Every real interview question deserves a short structure hint: what to say first and which example to use. Smalltalk, introductions and THEM explaining the company or the role get ${PASS}.`,
+    ].join("\n"),
+    choose: [
+      "- Follow the playbook below. Give a structure the user can follow while answering: the core in one sentence first, then one concrete example with a result. Prefer short over complete.",
+      "- Name the result or number early when the profile or the brief has one. Give criteria, never 'on gut feeling'.",
+    ],
+    facts:
+      "- Only use facts, experience, results, numbers and salary figures from the profile and the call brief. Never invent them. If the user would need information you do not have, suggest they say they will check and come back on it.",
+    profileNote:
+      "(This profile was written for sales calls. Use what fits a job interview: who the user is, their cases and results, their rules and tone. The vacancy and the user's own points for this interview are in the brief.)",
+    briefHeading: "## Brief for this call (the vacancy and the user's key points)",
+    playbook: interviewPlaybook,
+  },
+  meeting: {
+    role: (lang) =>
+      `You are a live meeting coach whispering to the user (a participant, labelled ME) during ${article(lang)} ${lang} meeting. The other participants are labelled THEM.`,
+    autoRule: `- If you get an AUTO request and THEM did not ask ME something, push for or block a decision, disagree, or raise a risk, a deadline, a budget question or an open action point, answer exactly ${PASS} and nothing else.`,
+    choose: [
+      "- Follow the playbook below. Help the user steer to a decision, an owner and a date. Prefer short over complete.",
+      "- In a disagreement, suggest a calm sentence that first shows the user understood THEM.",
+    ],
+    facts:
+      "- Only use facts, numbers, dates and commitments from the profile and the call brief. If the user would need information you do not have, suggest they say they will check and come back on it.",
+    profileNote: "(This profile was written for sales calls. Use what fits this meeting: who the user is, their rules and tone.)",
+    briefHeading: "## Brief for this call (agenda and goals)",
+    playbook: meetingPlaybook,
+  },
+};
+
+/** The playbook appended to the instructions for this kind of call. */
+export function playbookFor(callType: CallType): string {
+  return (CALL_TYPE_TEXT[callType] ?? CALL_TYPE_TEXT.sales).playbook;
+}
+
+export function buildInstructions(profile: Profile, callBrief: string, language: string, callType: CallType = "sales"): string {
   const lang = languageName(language);
+  const ct = CALL_TYPE_TEXT[callType] ?? CALL_TYPE_TEXT.sales;
   return [
-    `You are a live sales coach whispering to the user (the seller, labelled ME) during a ${lang} sales call. The other party is labelled THEM. Only the user sees your output, on a small overlay next to their camera. They glance at it for one second while talking.`,
+    `${ct.role(lang)} Only the user sees your output, on a small overlay next to their camera. They glance at it for one second while talking.`,
     "",
     "## Output format (strict)",
     `- Write in ${lang}.`,
     "- Line 1: what to say or do next, max 15 words. Prefer a sentence they can say literally.",
     "- Optional line 2, starting with '? ': one short question they can ask. Only if it helps.",
     "- No preamble, no labels like 'Tip:', no markdown, no emojis, no em dashes or en dashes.",
-    `- If you get an AUTO request and THEM did not raise an objection, a buying signal, a direct question or an important fact, answer exactly ${PASS} and nothing else.`,
+    ct.autoRule,
     "- For a HOTKEY request always give a tip, never PASS.",
     "",
     "## How to choose the tip",
     "- React to the LAST thing THEM said, in the context of the whole call.",
-    "- Follow the playbook below. Prefer a question over a pitch. Prefer short over complete.",
-    "- Only use facts, prices, cases and promises from the profile and the call brief. If the user would need information you do not have, suggest they say they will check and follow up by email.",
-    "- If THEM asks something the user must answer factually and the profile has the answer, give that answer in the user's words.",
+    ...ct.choose,
+    ct.facts,
+    "- If THEM asks something the user must answer factually and the profile or the brief has the answer, give that answer in the user's words.",
+    `- A THEM line that ends with ${STILL_SPEAKING} is not finished yet. You may anticipate where the sentence is going, so the user is ready when THEM stops. Keep that tip extra short (max 10 words). For an AUTO request, answer ${PASS} when it is still too unclear.`,
     "",
     "## Profile of the user",
+    ...(ct.profileNote ? [ct.profileNote] : []),
     profileToText(profile),
     "",
-    "## Brief for this call",
+    ct.briefHeading,
     callBrief.trim() || "(none)",
     "",
-    playbook,
+    ct.playbook,
   ].join("\n");
 }
 
 export interface Line {
   speaker: Speaker;
   text: string;
+  /** The speaker has not finished this line yet (interim transcription). */
+  partial?: boolean;
 }
 
-export function buildInput(lines: Line[], trigger: "hotkey" | "auto"): string {
-  const convo = lines.map((l) => `${l.speaker === "me" ? "ME" : "THEM"}: ${l.text}`).join("\n");
+/** Marks the last THEM line while THEM is still talking. */
+export const STILL_SPEAKING = "(still speaking)";
+
+/**
+ * `stillSpeaking`: this is an early (draft) request on what THEM is still saying, so an
+ * unfinished last THEM line gets the (still speaking) mark. Other requests never get it.
+ */
+export function buildInput(lines: Line[], trigger: "hotkey" | "auto", opts: { stillSpeaking?: boolean } = {}): string {
+  let lastThem = -1;
+  lines.forEach((l, i) => {
+    if (l.speaker === "them") lastThem = i;
+  });
+  const mark = (l: Line, i: number) => !!opts.stillSpeaking && i === lastThem && !!l.partial;
+  const convo = lines
+    .map((l, i) => `${l.speaker === "me" ? "ME" : "THEM"}: ${l.text}${mark(l, i) ? ` ${STILL_SPEAKING}` : ""}`)
+    .join("\n");
   return `${trigger === "hotkey" ? "HOTKEY" : "AUTO"} request.\n\nConversation so far (most recent last):\n${convo || "(nothing yet)"}`;
 }
 

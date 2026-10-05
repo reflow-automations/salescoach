@@ -1,24 +1,136 @@
 {
   "sizes": {
-    "overlay": { "width": 560, "height": 210 },
-    "overlayNarrow": { "width": 380, "height": 150 },
-    "settings": { "width": 760, "height": 820 }
+    "overlay": {
+      "width": 560,
+      "height": 210
+    },
+    "overlayNarrow": {
+      "width": 380,
+      "height": 150
+    },
+    "settings": {
+      "width": 760,
+      "height": 820
+    },
+    "feedback": {
+      "width": 720,
+      "height": 860
+    }
   },
   "overlay": [
-    { "name": "idle", "label": "Net geopend, luistert nog niet" },
-    { "name": "listening", "label": "Luistert mee, nog geen tip" },
-    { "name": "tip-live", "label": "Tip komt binnen (streaming)" },
-    { "name": "tip-done", "label": "Tip compleet" },
-    { "name": "tip-old", "label": "Tip ouder dan 25 seconden" },
-    { "name": "error", "label": "Starten mislukt: geen Gemini-key" },
-    { "name": "warn", "label": "Waarschuwing: transcriptie viel weg" },
-    { "name": "transcript", "label": "Tip plus transcript open" }
+    {
+      "name": "idle",
+      "label": "Net geopend, luistert nog niet"
+    },
+    {
+      "name": "listening",
+      "label": "Luistert mee, nog geen tip"
+    },
+    {
+      "name": "tip-live",
+      "label": "Tip komt binnen (streaming)"
+    },
+    {
+      "name": "tip-done",
+      "label": "Tip compleet"
+    },
+    {
+      "name": "tip-draft",
+      "label": "Voorlopige tip terwijl de ander nog praat"
+    },
+    {
+      "name": "tip-history",
+      "label": "Tip met de 3 vorige tips eronder"
+    },
+    {
+      "name": "tip-old",
+      "label": "Tip ouder dan 25 seconden"
+    },
+    {
+      "name": "error",
+      "label": "Starten mislukt: geen Gemini-key"
+    },
+    {
+      "name": "warn",
+      "label": "Waarschuwing: transcriptie viel weg"
+    },
+    {
+      "name": "transcript",
+      "label": "Tip plus transcript open"
+    },
+    {
+      "name": "after-stop",
+      "label": "Na Stop: knop voor feedback op het gesprek"
+    },
+    {
+      "name": "interview",
+      "label": "Sollicitatiegesprek: soort gesprek in de balk, tip met salaris-label"
+    }
   ],
-  "overlayNarrow": [{ "name": "tip-done", "label": "Tip compleet, smalste venster (380 x 150)" }],
+  "overlayNarrow": [
+    {
+      "name": "tip-done",
+      "label": "Tip compleet, smalste venster (380 x 150)"
+    },
+    {
+      "name": "tip-history",
+      "label": "Geschiedenis verborgen in het smalste venster (380 x 150)"
+    },
+    {
+      "name": "after-stop",
+      "label": "Na Stop in het smalste venster (380 x 150)"
+    },
+    {
+      "name": "interview",
+      "label": "Sollicitatiegesprek in het smalste venster: keuze verborgen (380 x 150)"
+    }
+  ],
   "settings": [
-    { "name": "missing", "label": "Eerste keer: niets ingesteld" },
-    { "name": "ready", "label": "Klaar: Gemini-key en ChatGPT gekoppeld" },
-    { "name": "profile", "label": "Profiel half ingevuld (5 van 8)" },
-    { "name": "brief", "label": "Briefing voor dit gesprek" }
+    {
+      "name": "missing",
+      "label": "Eerste keer: niets ingesteld"
+    },
+    {
+      "name": "ready",
+      "label": "Klaar: Gemini-key en ChatGPT gekoppeld"
+    },
+    {
+      "name": "profile",
+      "label": "Profiel half ingevuld (5 van 8)"
+    },
+    {
+      "name": "brief",
+      "label": "Briefing voor dit gesprek"
+    },
+    {
+      "name": "after-call",
+      "label": "Na het gesprek: feedbackmodel uit het ChatGPT-abonnement"
+    },
+    {
+      "name": "call-type",
+      "label": "Soort gesprek onder Tijdens het gesprek (sollicitatie gekozen)"
+    },
+    {
+      "name": "brief-interview",
+      "label": "Dit gesprek bij een sollicitatie: hint en voorbeeldtekst voor de vacature"
+    }
+  ],
+  "feedback": [
+    {
+      "name": "loading",
+      "label": "Feedback wordt geschreven"
+    },
+    {
+      "name": "done",
+      "label": "Feedback klaar"
+    },
+    {
+      "name": "done-bottom",
+      "label": "Feedback klaar, naar beneden gescrold"
+    },
+    {
+      "name": "error",
+      "label": "Feedback mislukt (geen key)"
+    }
   ]
 }

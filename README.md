@@ -61,7 +61,10 @@ As of October 2026. Prices and free tiers change, so check the current pricing p
 | Ears | Gemini 3.5 Transcribe Live (default) | Free Gemini key | Free tier available. Sessions are capped at 10 minutes, so the app rolls over to a fresh session every 9 minutes with a short overlap. |
 | Ears | OpenAI `gpt-live-transcribe` | OpenAI API key | Pay per use. The model has no built-in speech detection, so the app detects pauses itself. |
 | Brain | Gemini Flash-Lite (default, `gemini-3.5-flash-lite`) | Gemini key | Free tier available, cheap beyond it. |
-| Brain | OpenAI Responses API (default `gpt-5.4-mini`) | OpenAI API key | Pay per use. |
+
+The model fields in Settings suggest every text model your key can use, fetched live, so new models show up without an app update.
+| Brain | OpenAI Responses API (default `gpt-6-luna`) | OpenAI API key | Pay per use. |
+| Feedback after the call | Same as the brain, or its own model (defaults `gemini-3.8-flash` / `gpt-6.1-sol`, or a model from your ChatGPT plan) | | Speed does not matter here, so a larger model is fine. |
 | Brain | Your ChatGPT Plus or Pro plan | Sign in with ChatGPT | Counts against your plan limits instead of API billing. The model list comes from your own account. |
 
 Each call runs two transcription streams (you and them) for as long as you listen, and one short brain request per tip. Exact cost per call has not been measured yet, so look at your provider's usage page after a few real calls.

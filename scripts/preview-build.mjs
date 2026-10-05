@@ -16,7 +16,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const srcRenderer = join(root, "src", "renderer");
 const outRoot = join(root, "dist-preview");
 const scenes = JSON.parse(readFileSync(join(root, "preview", "scenes.json"), "utf8"));
-const PAGE_FILES = ["overlay.html", "settings.html", "style.css", "overlay.ts", "settings.ts"];
+const PAGE_FILES = ["overlay.html", "settings.html", "feedback.html", "style.css", "overlay.ts", "settings.ts", "feedback.ts"];
 const RESERVED = new Set(["shots"]);
 
 const common = { bundle: true, sourcemap: true, logLevel: "warning", loader: { ".md": "text" }, absWorkingDir: root };
@@ -130,7 +130,7 @@ async function buildVariant(v) {
 
   await build({
     ...common,
-    entryPoints: { overlay: pick("overlay.ts"), settings: pick("settings.ts") },
+    entryPoints: { overlay: pick("overlay.ts"), settings: pick("settings.ts"), feedback: pick("feedback.ts") },
     outdir: out,
     platform: "browser",
     format: "esm",
@@ -140,7 +140,7 @@ async function buildVariant(v) {
   await build({ ...common, entryPoints: [join(srcRenderer, "pcm-worklet.ts")], outfile: join(out, "pcm-worklet.js"), platform: "browser", format: "esm", target: "chrome130", sourcemap: false });
   await build({ ...common, entryPoints: [join(root, "preview", "mock-coach.ts")], outfile: join(out, "mock.js"), platform: "browser", format: "iife", target: "chrome130" });
 
-  for (const page of ["overlay.html", "settings.html"]) {
+  for (const page of ["overlay.html", "settings.html", "feedback.html"]) {
     const html = readFileSync(pick(page), "utf8");
     writeFileSync(join(out, page), injectMock(html, relative(root, pick(page))));
   }
@@ -239,6 +239,7 @@ function galleryHtml(list) {
   ${section("Overlay", "overlay", scenes.overlay, sizes.overlay, "overlay")}
   ${section("Overlay smal", "overlay", scenes.overlayNarrow, sizes.overlayNarrow, "overlay")}
   ${section("Instellingen", "settings", scenes.settings, sizes.settings, "settings")}
+  ${section("Feedback na het gesprek", "feedback", scenes.feedback, sizes.feedback, "settings")}
 </main>
 <script>
   (function () {

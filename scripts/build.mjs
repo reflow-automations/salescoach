@@ -18,9 +18,9 @@ if (args.has("--eval")) {
 mkdirSync("dist", { recursive: true });
 await build({ ...common, entryPoints: ["src/main/main.ts"], outfile: "dist/main.js", platform: "node", format: "cjs", target: "node22", external: ["electron"] });
 await build({ ...common, entryPoints: ["src/main/preload.ts"], outfile: "dist/preload.js", platform: "node", format: "cjs", target: "node22", external: ["electron"] });
-await build({ ...common, entryPoints: ["src/renderer/overlay.ts", "src/renderer/settings.ts"], outdir: "dist/renderer", platform: "browser", format: "esm", target: "chrome130" });
+await build({ ...common, entryPoints: ["src/renderer/overlay.ts", "src/renderer/settings.ts", "src/renderer/feedback.ts"], outdir: "dist/renderer", platform: "browser", format: "esm", target: "chrome130" });
 await build({ ...common, entryPoints: ["src/renderer/pcm-worklet.ts"], outfile: "dist/renderer/pcm-worklet.js", platform: "browser", format: "esm", target: "chrome130", sourcemap: false });
-for (const f of ["overlay.html", "settings.html", "style.css"]) cpSync(`src/renderer/${f}`, `dist/renderer/${f}`);
+for (const f of ["overlay.html", "settings.html", "feedback.html", "style.css"]) cpSync(`src/renderer/${f}`, `dist/renderer/${f}`);
 
 // Inter variable font (SIL OFL 1.1, from @fontsource-variable/inter), latin + latin-ext, normal style.
 // Local files, so the pages' CSP (default-src 'self') allows them.

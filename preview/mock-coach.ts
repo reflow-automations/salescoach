@@ -21,6 +21,9 @@ import {
   DEFAULT_SETTINGS,
   EMPTY_PROFILE,
   type ChatGPTStatus,
+  type FeedbackCallInfo,
+  type FeedbackResult,
+  type FeedbackSaveResult,
   type Profile,
   type PublicSettingsState,
   type SecretName,
@@ -28,6 +31,7 @@ import {
   type Speaker,
   type StatusEvent,
   type TipEvent,
+  type TipLabel,
   type TranscriptEvent,
 } from "../src/shared/types";
 import briefExampleEn from "../examples/call-brief-example.en.md";
@@ -68,10 +72,14 @@ async function waitFor(check: () => boolean, timeoutMs: number): Promise<boolean
 
 // ---------- scene selection ----------
 
-type Page = "overlay" | "settings";
+type Page = "overlay" | "settings" | "feedback";
 const page: Page =
-  /settings\.html$/i.test(location.pathname) || document.documentElement.classList.contains("settings-root") ? "settings" : "overlay";
-const sceneNames = (page === "settings" ? scenes.settings : scenes.overlay).map((s) => s.name);
+  /feedback\.html$/i.test(location.pathname) || document.documentElement.classList.contains("feedback-root")
+    ? "feedback"
+    : /settings\.html$/i.test(location.pathname) || document.documentElement.classList.contains("settings-root")
+      ? "settings"
+      : "overlay";
+const sceneNames = (page === "settings" ? scenes.settings : page === "feedback" ? scenes.feedback : scenes.overlay).map((s) => s.name);
 const requested = new URLSearchParams(location.search).get("scene") ?? "";
 let scene = requested || sceneNames[0];
 if (!sceneNames.includes(scene)) {
@@ -139,6 +147,101 @@ const TIPS = nl
       "Set a date for the free website check now.\n? Does Tuesday or Thursday suit you better?",
     ];
 
+/** THEM's last line while they are still saying it, and the draft tip the coach gives on it. */
+const DRAFT_LINE = nl ? "Een nieuwe ketel zo'n 2.500 euro. Maar 3.450 voor een site vind ik" : "A new boiler is about 2,500. But 3,450 for a website feels";
+const DRAFT_TIP = nl
+  ? "Vraag waarmee hij het vergelijkt.\n? Wat levert één extra klus per maand op?"
+  : "Ask what he compares it with.\n? What is one extra job a month worth?";
+
+/** Earlier tips of the same call, oldest first, with how long ago they came (seconds). */
+const HISTORY_TIPS: { text: string; label?: TipLabel; ago: number }[] = nl
+  ? [
+      { text: "Vraag wat de oude site hem aan gemiste aanvragen kost.", ago: 118 },
+      { text: "Zeg kort: de scan is gratis. Vraag dan wat hij wil bereiken.", label: "question", ago: 47 },
+      { text: "Zeg dat de site binnen vier weken live kan, vraag wat eerst moet.", label: "speed", ago: 12 },
+    ]
+  : [
+      { text: "Ask what the old site costs him in missed requests.", ago: 118 },
+      { text: "Say briefly: the scan is free. Then ask what he wants to reach.", label: "question", ago: 47 },
+      { text: "Say the site can be live in four weeks, ask what comes first.", label: "speed", ago: 12 },
+    ];
+
+/** A job interview (fictional): the user is the candidate, THEM the interviewer. */
+const INTERVIEW_CALL: [Speaker, string][] = nl
+  ? [
+      ["them", "Fijn dat je er bent. Vertel eens wat over jezelf?"],
+      ["me", "Ik bouw al drie jaar automatiseringen voor kleine bedrijven."],
+      ["them", "Mooi. En waarom deze rol bij ons?"],
+      ["me", "Jullie willen het klantcontact slimmer maken, dat is precies mijn vak."],
+      ["them", "Duidelijk. Aan wat voor salaris had je gedacht?"],
+    ]
+  : [
+      ["them", "Thanks for coming in. Could you tell me a bit about yourself?"],
+      ["me", "Sure. I have built automations for small companies for three years."],
+      ["them", "Great. And why this role with us?"],
+      ["me", "You want to make customer contact smarter, and that is exactly my field."],
+      ["them", "Clear. What kind of salary did you have in mind?"],
+    ];
+
+const INTERVIEW_HISTORY: { text: string; label?: TipLabel; ago: number }[] = nl
+  ? [
+      { text: "Eerst de kern: wat je nu doet, dan één resultaat met een cijfer.", label: "question", ago: 64 },
+      { text: "Noem één ding uit de vacature dat bij jou past.", label: "motivation", ago: 21 },
+    ]
+  : [
+      { text: "Core first: what you do now, then one result with a number.", label: "question", ago: 64 },
+      { text: "Name one thing from the vacancy that fits you.", label: "motivation", ago: 21 },
+    ];
+
+const INTERVIEW_TIP = nl
+  ? "Vraag eerst naar hun range. Noem dan je eigen range.\n? Welke range hebben jullie voor deze rol in gedachten?"
+  : "Ask for their range first. Then name your own range.\n? What range do you have in mind for this role?";
+
+/** The answer of the feedback model for the demo call, in the fixed layout (src/coach/feedback.ts). */
+const FEEDBACK_ANSWER = nl
+  ? `## SUMMARY
+Peter heeft een installatiebedrijf en krijgt via zijn site van 2018 maar twee aanvragen per maand.
+Je stelde sterke vragen over aanvragen en de waarde van een klus, waardoor hij zelf het probleem benoemde.
+Bij de prijs van 3.450 euro ging je uitleggen in plaats van vragen, en het gesprek eindigde zonder vaste afspraak.
+## STRONG_MOMENTS
+- QUOTE: "Hoeveel offerteaanvragen komen er via die site binnen?"
+  WHY: Peter noemde zelf het probleem: weinig aanvragen via de site.
+- QUOTE: "En wat is een gemiddelde klus voor jullie waard?"
+  WHY: Nu kun je de prijs afzetten tegen één extra ketelklus van 2.500 euro.
+## IMPROVEMENTS
+- HAPPENED: Toen Peter zei dat 3.450 euro best veel is, begon je meteen uit te leggen wat er allemaal in zit.
+  BETTER: "Begrijpelijk. Waar vergelijk je dat bedrag mee?"
+- HAPPENED: Je sloot af zonder datum, terwijl Peter wel interesse liet zien.
+  BETTER: "Zullen we de gratis scan donderdag om tien uur samen doornemen?"
+## NEXT_STEP
+NONE
+## FILLER_WORDS
+eh (6), eigenlijk (4)
+## SCORE
+7/10: Goede vragen vooraf, bij het prijsbezwaar en de afsluiting valt nog winst te halen.`
+  : `## SUMMARY
+Pete runs a heating company and gets only two quote requests a month from his 2018 website.
+You asked strong questions about requests and the value of a job, so he named the problem himself.
+At the price of 3,450 you started explaining instead of asking, and the call ended without a set date.
+## STRONG_MOMENTS
+- QUOTE: "How many quote requests come in through that site?"
+  WHY: Pete named the problem himself: hardly any requests through the site.
+- QUOTE: "And what is an average job worth to you?"
+  WHY: Now you can weigh the price against one extra boiler job of 2,500.
+## IMPROVEMENTS
+- HAPPENED: When Pete said 3,450 feels like a lot, you started explaining everything that is included.
+  BETTER: "Fair enough. What do you compare that amount with?"
+- HAPPENED: You ended without a date, while Pete did show interest.
+  BETTER: "Shall we go through the free website check together on Thursday at ten?"
+## NEXT_STEP
+NONE
+## FILLER_WORDS
+um (6), basically (4)
+## SCORE
+7/10: Good questions up front, there is still something to gain at the price objection and the close.`;
+
+const FEEDBACK_CALL: FeedbackCallInfo = { minutes: 14, endedAt: new Date(2026, 9, 5, 14, 32).getTime() };
+
 /** Same texts as main.ts sends. */
 const MISSING_KEY = {
   gemini: t(lang, "main.missingKey", { label: t(lang, "label.geminiKey") }),
@@ -180,8 +283,21 @@ switch (scene) {
   case "profile":
     state.profile = { ...PARTIAL_PROFILE };
     break;
+  case "after-call":
+    state.chatgpt = structuredClone(CHATGPT_CONNECTED);
+    state.settings = { ...state.settings, brain: "gemini", feedbackBrain: "chatgpt", feedbackModel: "" };
+    break;
   case "error":
     state.hasSecret = { geminiKey: false, openaiKey: false };
+    break;
+  case "interview":
+  case "call-type":
+    state.settings = { ...state.settings, callType: "interview" };
+    break;
+  case "brief-interview":
+    // An empty brief, so the placeholder for a job interview shows.
+    state.settings = { ...state.settings, callType: "interview" };
+    state.callBrief = "";
     break;
 }
 
@@ -204,17 +320,18 @@ function startProblem(): string | null {
 
 // ---------- events ----------
 
-type Channel = "tip" | "transcript" | "status" | "settings";
+type Channel = "tip" | "transcript" | "status" | "settings" | "feedbackDelta";
 type Handler = (payload: unknown) => void;
 const handlers: Record<Channel, Set<Handler>> = {
   tip: new Set(),
   transcript: new Set(),
   status: new Set(),
   settings: new Set(),
+  feedbackDelta: new Set(),
 };
 
 /** Like webContents.send: the payload is copied, as IPC would. */
-function emit(channel: Channel, payload: TipEvent | TranscriptEvent | StatusEvent | Settings): void {
+function emit(channel: Channel, payload: TipEvent | TranscriptEvent | StatusEvent | Settings | { reqId: string; text: string }): void {
   for (const fn of [...handlers[channel]]) {
     try {
       fn(structuredClone(payload));
@@ -232,6 +349,8 @@ const on = (channel: Channel) => (fn: Handler) => {
 };
 
 let tipSeq = 0;
+/** Length of the demo call the Stop button reports; 0 means too short for feedback. */
+let callMinutes = 0;
 let tipIndex = 0;
 let streaming = false;
 
@@ -239,13 +358,17 @@ let streaming = false;
 async function streamTip(
   text: string,
   trigger: "hotkey" | "auto",
-  opts: { finish?: boolean; dropWords?: number; stepMs?: number } = {},
+  opts: { finish?: boolean; dropWords?: number; stepMs?: number; draft?: boolean; label?: TipLabel; replaces?: string } = {},
 ): Promise<string> {
   const { finish = true, dropWords = 0, stepMs = 60 } = opts;
   const id = `tip-${++tipSeq}`;
   streaming = true;
   try {
-    emit("tip", { kind: "start", id, trigger });
+    const start: Extract<TipEvent, { kind: "start" }> = { kind: "start", id, trigger };
+    if (opts.draft) start.draft = true;
+    if (opts.label) start.label = opts.label;
+    if (opts.replaces) start.replaces = opts.replaces;
+    emit("tip", start);
     const words = text.match(/\S+\s*/g) ?? [];
     const sent = dropWords ? words.slice(0, -dropWords) : words;
     for (let i = 0; i < sent.length; i += 2) {
@@ -335,7 +458,9 @@ const coach = {
   stopListening: async () => {
     await sleep(20);
     state.listening = false;
-    emit("status", { listening: false, message: t(lang, "status.stopped"), level: "info" });
+    // main.ts says with every stop whether the call is long enough for feedback.
+    const feedback = callMinutes >= 2;
+    emit("status", { listening: false, message: t(lang, "status.stopped"), level: "info", feedback, ...(callMinutes ? { callMinutes } : {}) });
   },
   requestTip: async () => {
     if (streaming) return;
@@ -355,7 +480,37 @@ const coach = {
   onTip: on("tip"),
   onStatus: on("status"),
   onSettings: on("settings"),
+  openFeedback: async () => {
+    console.info("[mock] Zou nu het feedbackvenster openen (open feedback.html in de preview).");
+  },
+  // feedback window
+  getFeedbackCall: async () => {
+    await sleep(10);
+    return structuredClone(FEEDBACK_CALL);
+  },
+  createFeedback: async (reqId: string): Promise<FeedbackResult> => {
+    if (scene === "loading") return new Promise<FeedbackResult>(() => {}); // still writing
+    if (scene === "error") {
+      await sleep(40);
+      return { ok: false, error: MISSING_KEY.gemini };
+    }
+    // Stream the answer in small pieces, like main does, then answer the invoke.
+    const pieces = FEEDBACK_ANSWER.match(/[\s\S]{1,40}/g) ?? [];
+    for (const text of pieces) {
+      await sleep(2);
+      emit("feedbackDelta", { reqId, text });
+    }
+    return { ok: true, text: FEEDBACK_ANSWER, model: "gemini-3.5-flash" };
+  },
+  saveFeedback: async (text: string): Promise<FeedbackSaveResult> => {
+    await sleep(10);
+    console.info(`[mock] Zou nu ${text.length} tekens opslaan via een opslagvenster.`);
+    return { ok: true, file: "salescoach-feedback-2026-10-05-1432.md" };
+  },
+  onFeedbackDelta: on("feedbackDelta"),
   // settings window
+  listModels: async (provider: "gemini" | "openai") =>
+    provider === "gemini" ? ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro"] : ["gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.6-terra"],
   getState: async () => {
     await sleep(10);
     stateServed++;
@@ -429,6 +584,8 @@ Object.defineProperty(window, "coach", { value: bridge, enumerable: true, config
 // animations are moved forward, so other designs that age a tip differently follow too.
 
 let clockOffset = 0;
+// "tip-history" moves the clock forward between tips, so the history shows real ages.
+if (scene === "tip-history" || scene === "interview") Date.now = () => realNow() + clockOffset;
 if (scene === "tip-old") {
   const patched = (handler: TimerHandler, timeout?: number, ...args: unknown[]): number =>
     realSetTimeout(handler, typeof timeout === "number" && timeout >= 20_000 ? 30 : timeout, ...args);
@@ -500,6 +657,42 @@ async function runOverlayScene(): Promise<void> {
       await say(CALL);
       await streamTip(TIPS[0], "auto");
       break;
+    case "tip-draft": {
+      // THEM is still talking: the last line is interim and the tip is a draft.
+      await clickStart();
+      await say(CALL.slice(0, 5));
+      emit("transcript", { speaker: "them", id: `them-${++lineSeq}`, final: false, text: DRAFT_LINE });
+      await streamTip(DRAFT_TIP, "auto", { draft: true, label: "price" });
+      break;
+    }
+    case "tip-history": {
+      await clickStart();
+      await say(CALL);
+      // Clock: the oldest tip came HISTORY_TIPS[0].ago seconds before now.
+      clockOffset = -HISTORY_TIPS[0].ago * 1000;
+      for (let i = 0; i < HISTORY_TIPS.length; i++) {
+        const tip = HISTORY_TIPS[i];
+        await streamTip(tip.text, "auto", { label: tip.label, stepMs: 5 });
+        const next = HISTORY_TIPS[i + 1];
+        clockOffset += (next ? tip.ago - next.ago : tip.ago) * 1000;
+      }
+      await streamTip(TIPS[0], "auto", { label: "price", stepMs: 5 });
+      break;
+    }
+    case "interview": {
+      // A job interview: the kind of call shows in the bar, the labels come from the interview categories.
+      await clickStart();
+      await say(INTERVIEW_CALL);
+      clockOffset = -INTERVIEW_HISTORY[0].ago * 1000;
+      for (let i = 0; i < INTERVIEW_HISTORY.length; i++) {
+        const tip = INTERVIEW_HISTORY[i];
+        await streamTip(tip.text, "auto", { label: tip.label, stepMs: 5 });
+        const next = INTERVIEW_HISTORY[i + 1];
+        clockOffset += (next ? tip.ago - next.ago : tip.ago) * 1000;
+      }
+      await streamTip(INTERVIEW_TIP, "auto", { label: "salary", stepMs: 5 });
+      break;
+    }
     case "tip-old":
       await clickStart();
       await say(CALL);
@@ -520,16 +713,45 @@ async function runOverlayScene(): Promise<void> {
       await streamTip(TIPS[0], "auto");
       await openTranscript();
       break;
+    case "after-stop": {
+      // A 14 minute call that just ended: the overlay offers feedback on it.
+      await clickStart();
+      await say(CALL);
+      await streamTip(TIPS[2], "auto", { stepMs: 5 });
+      callMinutes = 14;
+      const btn = findButton(["#listen"], /^stop$/i);
+      if (!btn) throw new Error("Stopknop niet gevonden");
+      btn.click();
+      await waitFor(() => !document.getElementById("afterCall")?.hidden, 2000);
+      break;
+    }
   }
+}
+
+async function runFeedbackScene(): Promise<void> {
+  await waitFor(() => stateServed > 0, 2000);
+  // Wait until the page shows the state of the scene.
+  const target = scene === "loading" ? "fbLoading" : scene === "error" ? "fbError" : "fbContent";
+  if (!(await waitFor(() => document.getElementById(target)?.hidden === false, 4000))) throw new Error(`#${target} werd niet zichtbaar`);
+  if (scene.startsWith("done")) await waitFor(() => document.getElementById("fbWriting")?.hidden === true, 2000);
+  if (scene === "done-bottom") window.scrollTo(0, document.documentElement.scrollHeight);
 }
 
 async function runSettingsScene(): Promise<void> {
   await waitFor(() => stateServed > 0, 2000);
-  const tab = scene === "profile" ? "profile" : scene === "brief" ? "call" : "conn";
+  const tab = scene === "profile" ? "profile" : scene === "brief" || scene === "brief-interview" ? "call" : "conn";
   const btn = findButton([`[data-tab="${tab}"]`, `#tab-${tab}`]);
   if (!btn) throw new Error(`Tabblad ${tab} niet gevonden`);
   btn.click();
   window.scrollTo(0, 0);
+  if (scene === "after-call") {
+    await sleep(50);
+    document.getElementById("feedbackBrain")?.closest("section")?.scrollIntoView({ block: "center" });
+  }
+  if (scene === "call-type") {
+    await sleep(50);
+    document.getElementById("callType")?.closest("section")?.scrollIntoView({ block: "center" });
+  }
 }
 
 // ---------- overlay window background ----------
@@ -550,6 +772,7 @@ async function play(): Promise<void> {
   await sleep(200);
   try {
     if (page === "settings") await runSettingsScene();
+    else if (page === "feedback") await runFeedbackScene();
     else await runOverlayScene();
   } catch (err) {
     window.__sceneError = err instanceof Error ? err.message : String(err);
@@ -560,7 +783,7 @@ async function play(): Promise<void> {
   document.documentElement.dataset.sceneReady = "true";
 }
 
-window.__mock = { page, scene, lang, scenes, state, emit, streamTip, say, tips: TIPS, call: CALL };
+window.__mock = { page, scene, lang, scenes, state, emit, streamTip, say, tips: TIPS, call: CALL, draftTip: DRAFT_TIP, historyTips: HISTORY_TIPS, feedbackAnswer: FEEDBACK_ANSWER };
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => void play(), { once: true });
 else void play();

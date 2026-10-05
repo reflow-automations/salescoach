@@ -17,11 +17,15 @@ import { BrainError, type Brain } from "../src/main/providers/brain";
 import { createGeminiBrain } from "../src/main/providers/brain-gemini";
 import { createOpenAIBrain } from "../src/main/providers/brain-openai";
 import { normLang, type Lang } from "../src/shared/i18n";
-import { DEFAULT_SETTINGS, EMPTY_PROFILE, type Profile } from "../src/shared/types";
+import { DEFAULT_SETTINGS, EMPTY_PROFILE, normCallType, type CallType, type Profile } from "../src/shared/types";
 
 interface EvalCase {
   id: string;
   category: string;
+  /** The kind of call; a case without it is a sales call. */
+  callType?: CallType;
+  /** The brief for this call (for a job interview: the vacancy and the user's points). Default empty. */
+  brief?: string;
   trigger: "auto" | "hotkey";
   lines: Line[];
   expect: string;
@@ -189,7 +193,8 @@ async function runCase(brain: Brain, instructions: string, c: EvalCase): Promise
     try {
       const full = await brain({
         instructions,
-        input: buildInput(c.lines, c.trigger),
+        // A case with an unfinished THEM line stands for an early (draft) auto request, like the coach sends.
+        input: buildInput(c.lines, c.trigger, { stillSpeaking: c.trigger === "auto" }),
         signal: ctrl.signal,
         onDelta: (d) => {
           if (timing.first === null && d) timing.first = performance.now() - t0;
@@ -296,7 +301,9 @@ function report(
 
   results.forEach((r, i) => {
     const { c } = r;
-    out.push("", `### ${i + 1}. ${c.id} (${c.category}, ${c.trigger})`, "", "Excerpt:", "");
+    out.push("", `### ${i + 1}. ${c.id} (${normCallType(c.callType)}, ${c.category}, ${c.trigger})`, "");
+    if (c.brief?.trim()) out.push(`Brief: ${c.brief.trim().replace(/\s+/g, " ")}`, "");
+    out.push("Excerpt:", "");
     for (const l of c.lines) out.push(`> ${l.speaker === "me" ? "ME" : "THEM"}: ${l.text}  `);
     out.push("", "Tip:", "", fence(r.text), "");
     out.push(`Time: first token ${ms(r.firstMs)}, total ${ms(r.totalMs)}`, "", "Checks:", "");
@@ -316,7 +323,16 @@ async function main(): Promise<void> {
   const { cases, file: casesFile } = loadCases(cfg.lang, cfg.only);
   const { profile, source, note } = loadProfile(cfg.lang);
   if (note) console.log(note);
-  const instructions = buildInstructions(profile, "", cfg.lang);
+  // The same instructions as the app, per kind of call and brief of the case.
+  const instructionsCache = new Map<string, string>();
+  const instructionsFor = (c: EvalCase): string => {
+    const type = normCallType(c.callType);
+    const brief = c.brief ?? "";
+    const key = `${type}|${brief}`;
+    let s = instructionsCache.get(key);
+    if (s === undefined) instructionsCache.set(key, (s = buildInstructions(profile, brief, cfg.lang, type)));
+    return s;
+  };
   const brain = makeBrain(cfg);
   const startedAt = new Date();
 
@@ -324,11 +340,11 @@ async function main(): Promise<void> {
   const results: CaseResult[] = [];
   for (let i = 0; i < cases.length; i++) {
     if (i > 0 && cfg.gapMs > 0) await sleep(cfg.gapMs);
-    const r = await runCase(brain, instructions, cases[i]);
+    const r = await runCase(brain, instructionsFor(cases[i]), cases[i]);
     results.push(r);
     const failed = r.checks.filter((ch) => ch.ok === false).map((ch) => CHECKS[ch.key]);
     const first = r.error ? `ERROR: ${r.error}` : tipLines(r.text)[0] ?? "(empty)";
-    console.log(`[${i + 1}/${cases.length}] ${cases[i].id}: ${ms(r.firstMs)} | ${first}${failed.length ? ` | failed: ${failed.join(", ")}` : ""}`);
+    console.log(`[${i + 1}/${cases.length}] ${normCallType(cases[i].callType)} ${cases[i].id}: ${ms(r.firstMs)} | ${first}${failed.length ? ` | failed: ${failed.join(", ")}` : ""}`);
   }
 
   const dir = join(ROOT, "evals", "results");

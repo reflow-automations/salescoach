@@ -58,3 +58,15 @@ test("a bad key (also a 400) fails at once and keeps the knob on", async (t) => 
   await assert.rejects(ask("gemini-bad-key"));
   assert.deepEqual(calls[1].generationConfig.thinkingConfig, { thinkingLevel: "minimal" });
 });
+
+test("feedback requests skip the thinking knob and allow a longer answer", async (t) => {
+  const calls = stubFetch(t, () => ok());
+  const run = (o: Parameters<typeof createGeminiBrain>[0]) =>
+    createGeminiBrain(o)({ instructions: "Coach", input: "ME: hoi", signal: new AbortController().signal, onDelta: () => {} });
+  await run({ model: "gemini-feedback", apiKey: "AIza-test", minimalThinking: false, maxOutputTokens: 8192 });
+  assert.equal(calls[0].generationConfig.thinkingConfig, undefined);
+  assert.equal(calls[0].generationConfig.maxOutputTokens, 8192);
+  await run({ model: "gemini-feedback", apiKey: "AIza-test" });
+  assert.deepEqual(calls[1].generationConfig.thinkingConfig, { thinkingLevel: "minimal" });
+  assert.equal(calls[1].generationConfig.maxOutputTokens, 200);
+});

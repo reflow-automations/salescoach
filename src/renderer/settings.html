@@ -94,9 +94,22 @@
 
         <section class="group">
           <h3 data-i18n="conn.duringCallTitle">During the call</h3>
+          <div class="field calltype-field">
+            <label for="callType" data-i18n="conn.callTypeLabel">Kind of call</label>
+            <select id="callType">
+              <option value="sales" data-i18n="callType.sales">Sales call</option>
+              <option value="interview" data-i18n="callType.interview">Job interview</option>
+              <option value="meeting" data-i18n="callType.meeting">Meeting</option>
+            </select>
+            <p class="hint" data-i18n="conn.callTypeHint">Picks the playbook for the tips and the feedback. You can also switch it in the overlay, even during a call.</p>
+          </div>
           <div class="field">
             <label class="check"><input id="autoTips" type="checkbox" /> <span data-i18n="conn.autoTips">Automatic tips</span></label>
             <p class="hint" data-i18n="conn.autoTipsHint">After an objection, question or buying signal. Otherwise you only get a tip when you ask.</p>
+          </div>
+          <div class="field">
+            <label class="check"><input id="tipsWhileSpeaking" type="checkbox" /> <span data-i18n="conn.tipsWhileSpeaking">Tips while the other person is still talking</span></label>
+            <p class="hint" data-i18n="conn.tipsWhileSpeakingHint">The tip starts before they finish their sentence and updates when they do. Faster, but it asks the AI more often. Off: a tip only once they have finished.</p>
           </div>
           <dl class="hotkeys">
             <dt data-i18n="overlay.tipNow">Tip now</dt>
@@ -104,6 +117,27 @@
             <dt data-i18n="conn.hkToggle">Show or hide the overlay</dt>
             <dd><kbd id="hkToggle"></kbd></dd>
           </dl>
+        </section>
+
+        <section class="group">
+          <h3 data-i18n="conn.afterCallTitle">After the call</h3>
+          <div class="grid2">
+            <div class="field">
+              <label for="feedbackBrain" data-i18n="conn.feedbackBrainLabel">Model for the feedback</label>
+              <select id="feedbackBrain">
+                <option value="same" data-i18n="conn.feedbackSame">Same as the brain</option>
+                <option value="gemini">Gemini</option>
+                <option value="openai-key" data-i18n="label.openaiKey">OpenAI API key</option>
+                <option value="chatgpt" data-i18n="label.chatgptPlan">ChatGPT plan</option>
+              </select>
+            </div>
+            <div id="feedbackModelField" class="field" hidden>
+              <label id="feedbackModelLabel" for="feedbackModel" data-i18n="conn.feedbackModelLabel">Feedback model</label>
+              <input id="feedbackModel" type="text" spellcheck="false" autocomplete="off" />
+              <select id="feedbackModelCg" hidden></select>
+            </div>
+          </div>
+          <p id="feedbackHint" class="hint"></p>
         </section>
 
         <details id="moreOptions" class="group more">
@@ -215,6 +249,7 @@
             placeholder="Who are you talking to? Name and role.&#10;Which company, and what do they do?&#10;What is your goal for this call?&#10;What do you already know? Pains, budget, earlier contact."
           ></textarea>
         </div>
+        <p id="interviewHint" class="aside brief-tip"><strong data-i18n="call.interviewStrong">Job interview?</strong> <span data-i18n="call.interviewText">Paste the vacancy here, plus your key points: your best examples with a result, your salary range and the hours you want. Your profile stays as it is.</span></p>
         <p class="aside headset"><strong data-i18n="call.headsetStrong">Use a headset.</strong> <span data-i18n="call.headsetText">Otherwise your microphone also hears the other person, and the coach mixes the two of you up.</span></p>
       </section>
     </main>

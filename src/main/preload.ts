@@ -1,5 +1,6 @@
 // Narrow bridge between renderer and main. No keys or tokens ever cross it.
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
+import type { FeedbackCallInfo, FeedbackResult, FeedbackSaveResult } from "../shared/types";
 
 type Handler<T> = (payload: T) => void;
 const on = <T>(channel: string) => (fn: Handler<T>) => {
@@ -22,8 +23,20 @@ const api = {
   onTip: on("tip"),
   onStatus: on("status"),
   onSettings: on("settings"),
+  /** Opens (or focuses) the feedback window for the call that just ended. */
+  openFeedback: () => ipcRenderer.invoke("feedback:open"),
+  // feedback window
+  getFeedbackCall: () => ipcRenderer.invoke("feedback:call") as Promise<FeedbackCallInfo | null>,
+  /** Asks for the feedback once; the text also streams in through onFeedbackDelta with the same reqId. */
+  createFeedback: (reqId: string) => ipcRenderer.invoke("feedback:create", reqId) as Promise<FeedbackResult>,
+  /** Main shows a save dialog and writes the text as UTF-8. */
+  saveFeedback: (text: string) => ipcRenderer.invoke("feedback:save", text) as Promise<FeedbackSaveResult>,
+  /** Payload: { reqId, text }. */
+  onFeedbackDelta: on("feedback:delta"),
   // settings window
   getState: () => ipcRenderer.invoke("state:get"),
+  /** Text models available with the stored key of a provider, newest first (empty without a key). */
+  listModels: (provider: "gemini" | "openai"): Promise<string[]> => ipcRenderer.invoke("models:list", provider),
   saveSettings: (s: unknown) => ipcRenderer.invoke("settings:save", s),
   setSecret: (name: string, value: string) => ipcRenderer.invoke("secret:set", name, value),
   getProfile: () => ipcRenderer.invoke("profile:get"),

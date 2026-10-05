@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" class="settings-root feedback-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Feedback on your call</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="settings feedback">
+    <!-- The text below is English; feedback.ts fills it in the language of the settings (src/shared/i18n.ts). -->
+    <header class="masthead">
+      <span class="mark" aria-hidden="true"><span class="mark-line"></span></span>
+      <div class="masthead-text">
+        <h1 data-i18n="feedback.title">Feedback on your call</h1>
+        <p id="fbSub" class="sub"></p>
+      </div>
+    </header>
+
+    <main class="wrap fb-wrap">
+      <section id="fbLoading" class="lead-block fb-loading" role="status">
+        <span class="fb-spinner" aria-hidden="true"></span>
+        <div>
+          <strong data-i18n="feedback.loading">Writing your feedback...</strong>
+          <p class="hint" data-i18n="feedback.loadingHint">The coach reads the whole call. This can take up to a minute.</p>
+        </div>
+      </section>
+
+      <section id="fbError" class="fb-error" role="alert" hidden>
+        <h2 data-i18n="feedback.errorTitle">No feedback this time</h2>
+        <p id="fbErrorText"></p>
+        <div class="row">
+          <button type="button" id="fbRetry" class="primary" data-i18n="feedback.retry">Try again</button>
+          <button type="button" id="fbSettings" data-i18n="overlay.openSettings" hidden>Open settings</button>
+        </div>
+      </section>
+
+      <div id="fbContent" class="fb-content" hidden></div>
+      <p id="fbWriting" class="fb-writing" data-i18n="feedback.writing" hidden>Still writing...</p>
+    </main>
+
+    <footer class="dock">
+      <div id="fbState" class="readiness" aria-live="polite">
+        <strong id="fbStateTitle">Writing your feedback</strong>
+        <span id="fbStateDetail"></span>
+      </div>
+      <div class="dock-actions">
+        <span id="fbMsg" class="msg" aria-live="polite"></span>
+        <button type="button" id="fbCopy" class="ghost" data-i18n="feedback.copy" disabled>Copy</button>
+        <button type="button" id="fbSave" class="primary" data-i18n="feedback.save" disabled>Save as file</button>
+      </div>
+    </footer>
+    <script type="module" src="feedback.js"></script>
+  </body>
+</html>
