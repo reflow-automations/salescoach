@@ -156,7 +156,8 @@ function makeFeedbackBrain(): { brain: Brain; model: string } {
   switch (provider) {
     case "openai-key": {
       const key = requireSecret("openaiKey");
-      const model = ownModel || (own ? FEEDBACK_DEFAULT_MODELS.openai : settings.openaiModel);
+      // Also with "same": same service as the tips, but the smarter model; speed does not matter here.
+      const model = ownModel || FEEDBACK_DEFAULT_MODELS.openai;
       return {
         model,
         brain: createOpenAIBrain({ model, getToken: async () => key, planUsage: false, language: settings.language, reasoningEffort: "low", verbosity: "medium", maxOutputTokens: 4000 }),
@@ -164,7 +165,7 @@ function makeFeedbackBrain(): { brain: Brain; model: string } {
     }
     case "chatgpt": {
       // Like the settings window: without a chosen feedback model, the larger one from the plan.
-      const model = ownModel || (own && modelCache?.models.length ? smartestModel(modelCache.models) : "") || settings.chatgptModel;
+      const model = ownModel || (modelCache?.models.length ? smartestModel(modelCache.models) : "") || settings.chatgptModel;
       if (!model) throw new Error(tr(own ? "main.chooseFeedbackModel" : "main.chooseChatgptModel"));
       const name = modelCache?.models.find((m) => m.slug === model)?.displayName || model;
       // The plan rejects sampling fields, so no output cap; "medium" thinks longer than the live tips.
@@ -175,7 +176,7 @@ function makeFeedbackBrain(): { brain: Brain; model: string } {
     }
     case "gemini":
     default: {
-      const model = ownModel || (own ? FEEDBACK_DEFAULT_MODELS.gemini : settings.geminiModel);
+      const model = ownModel || FEEDBACK_DEFAULT_MODELS.gemini;
       // No "minimal thinking" knob, and room for thinking plus the whole answer.
       return { model, brain: createGeminiBrain({ model, apiKey: requireSecret("geminiKey"), minimalThinking: false, maxOutputTokens: 8192, temperature: 0.3 }) };
     }
