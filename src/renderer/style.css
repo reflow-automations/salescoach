@@ -1,0 +1,1456 @@
+/* Salescoach, variant A "prompter strip".
+   Overlay: a calm Nacht strip where the tip is the only loud thing and a line at the top edge says whether the coach listens.
+   Settings: a guided setup in three steps with a Nacht dock that always says whether you can start. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden],
+.hidden {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+/* ================= Overlay ================= */
+
+body.overlay {
+  --nacht: #131c2b;
+  --line: #24314a;
+  --ink: #f3f6fa;
+  --ink-2: #c5d0df;
+  --ink-old: #9aa6b8;
+  --chrome: #8693a6;
+  --chrome-hi: #e6ecf4;
+  --hover: rgba(255, 255, 255, 0.07);
+  --signaal: #13a47c;
+  --signaal-text: #5fd0a8;
+  --oranje: #f5981b;
+  --warn: #e8be4a;
+  --error: #f2685f;
+  --error-text: #ff9a92;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--nacht);
+  color: var(--ink);
+  font-family: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The status edge: closest to the webcam, so it is seen on every glance. */
+.overlay .edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 3px;
+  background: #2a3750;
+  pointer-events: none;
+}
+
+/* Listening: a solid green edge with a soft band of light under it that breathes slowly. */
+.overlay .edge.listening {
+  background: var(--signaal);
+}
+
+.overlay .edge.listening::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: linear-gradient(to bottom, rgba(19, 164, 124, 0.4), rgba(19, 164, 124, 0));
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+/* Broken line: the ears are reconnecting. */
+.overlay .edge.warn {
+  background: repeating-linear-gradient(90deg, var(--warn) 0 18px, transparent 18px 28px);
+}
+
+.overlay .edge.error {
+  background: var(--error);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---- header: the drag region ---- */
+
+.overlay .bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 37px;
+  padding: 3px 6px 0 8px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.overlay .bar button,
+.overlay .bar input,
+.overlay .bar label {
+  -webkit-app-region: no-drag;
+}
+
+.overlay .status {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 520;
+  color: var(--chrome);
+}
+
+.overlay .status[data-level="listening"] {
+  color: var(--signaal-text);
+}
+
+.overlay .status[data-level="warn"] {
+  color: var(--warn);
+}
+
+.overlay .status[data-level="error"] {
+  color: var(--error-text);
+}
+
+.overlay .tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.overlay button {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 560;
+  line-height: 1;
+  height: 26px;
+  padding: 0 9px;
+  color: var(--chrome);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overlay button:hover:not(:disabled) {
+  color: var(--chrome-hi);
+  background: var(--hover);
+}
+
+.overlay button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.overlay :focus-visible {
+  outline: 2px solid var(--chrome-hi);
+  outline-offset: 1px;
+}
+
+.overlay button.listen {
+  flex: none;
+  min-width: 58px;
+}
+
+/* The only filled control, and only while nothing is happening. */
+.overlay button.primary {
+  padding: 0 13px;
+  font-weight: 650;
+  color: var(--nacht);
+  background: var(--signaal);
+  border-color: var(--signaal);
+}
+
+.overlay button.primary:hover:not(:disabled) {
+  color: var(--nacht);
+  background: #22b88c;
+}
+
+.overlay #tipBtn {
+  color: var(--ink-2);
+}
+
+.overlay #tipBtn:hover:not(:disabled) {
+  color: var(--chrome-hi);
+}
+
+.overlay button.listen.quiet {
+  color: var(--ink-2);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.overlay button.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  padding: 0;
+}
+
+.overlay button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.overlay button.icon.active {
+  color: var(--chrome-hi);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.overlay .divider {
+  width: 1px;
+  height: 14px;
+  margin: 0 4px;
+  background: var(--line);
+}
+
+/* Auto tips: a neutral switch, so green keeps meaning "listening". */
+.overlay .switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px 0 6px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--chrome);
+  cursor: pointer;
+}
+
+.overlay .switch:hover {
+  color: var(--chrome-hi);
+  background: var(--hover);
+}
+
+.overlay .switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.overlay .switch .track {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 12px;
+  border-radius: 6px;
+  background: #2a3750;
+}
+
+.overlay .switch .track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chrome);
+}
+
+.overlay .switch input:checked + .track {
+  background: var(--ink-2);
+}
+
+.overlay .switch input:checked + .track::after {
+  left: 12px;
+  background: var(--nacht);
+}
+
+.overlay .switch input:focus-visible + .track {
+  outline: 2px solid var(--chrome-hi);
+  outline-offset: 2px;
+}
+
+.overlay .switch input:disabled + .track {
+  opacity: 0.5;
+}
+
+/* ---- the tip ---- */
+
+.overlay .stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 9px 20px 14px 18px;
+}
+
+.overlay .tip {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 23px;
+  font-weight: 620;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  user-select: text;
+}
+
+.overlay .tip-main .sent {
+  display: inline-block;
+  max-width: 100%;
+  text-wrap: pretty;
+}
+
+/* Line 2: the question to ask. The orange hairline marks "your move". */
+.overlay .tip .question {
+  margin-top: 10px;
+  padding-left: 11px;
+  border-left: 2px solid var(--oranje);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+.overlay .tip.live {
+  animation: tip-in 0.22s ease-out;
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.overlay .tip.pending .tip-main::after {
+  content: "...";
+  font-weight: 500;
+  color: var(--chrome);
+  animation: think 1.1s ease-in-out infinite;
+}
+
+@keyframes think {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Still writing: a static green caret after the last line. */
+.overlay .tip.live:not(.pending) > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 4px;
+  vertical-align: -0.12em;
+  border-radius: 1px;
+  background: var(--signaal);
+}
+
+/* Older than 25 seconds: it steps back, but stays readable. */
+.overlay .tip.old {
+  color: var(--ink-old);
+}
+
+.overlay .tip.old .question {
+  color: var(--chrome);
+  border-left-color: rgba(245, 152, 27, 0.45);
+}
+
+.overlay .tip.muted {
+  max-width: 48ch;
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: #8e9aad;
+}
+
+.overlay .tip.error {
+  font-size: 16px;
+  font-weight: 520;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--error-text);
+}
+
+.overlay .tip .inline-action {
+  display: block;
+  height: 26px;
+  margin-top: 10px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--chrome-hi);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- transcript ---- */
+
+/* Takes only the room the tip leaves; the tip shrinks only below three transcript lines. */
+.overlay .transcript {
+  flex: 1 1 0;
+  min-height: 4.4em;
+  margin-top: 10px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  overflow-y: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 1px, transparent 1px, #000 8px);
+  mask-image: linear-gradient(to bottom, #000 0 1px, transparent 1px, #000 8px);
+  font-size: 12.5px;
+  line-height: 1.4;
+  user-select: text;
+}
+
+.overlay .transcript .line {
+  display: flex;
+  gap: 8px;
+  margin: 1px 0;
+}
+
+.overlay .transcript .who {
+  flex: none;
+  /* Fits "Them" and "Me" as well as "Zij" and "Ik". */
+  width: 38px;
+  font-weight: 600;
+  color: var(--chrome);
+}
+
+/* Their words matter most: brighter than your own. */
+.overlay .transcript .line.them .text {
+  color: #dce4ee;
+}
+
+.overlay .transcript .line.me .text {
+  color: var(--ink-old);
+}
+
+.overlay .transcript .line.interim .text {
+  font-style: italic;
+  color: var(--chrome);
+}
+
+.overlay.with-transcript .tip {
+  font-size: 19px;
+}
+
+.overlay.with-transcript .tip .question {
+  margin-top: 6px;
+  font-size: 14.5px;
+}
+
+.overlay ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overlay ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+}
+
+.overlay ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- narrow and short windows ---- */
+
+@media (max-width: 440px) {
+  .overlay .bar {
+    gap: 3px;
+    padding-left: 6px;
+  }
+
+  .overlay .switch {
+    padding: 0 6px 0 5px;
+  }
+
+  .overlay .divider {
+    margin: 0 2px;
+  }
+
+  .overlay .stage {
+    padding: 6px 14px 10px 14px;
+  }
+
+  .overlay .tip {
+    font-size: 18px;
+    line-height: 1.24;
+  }
+
+  .overlay .tip .question {
+    margin-top: 6px;
+    padding-left: 9px;
+    font-size: 14px;
+  }
+
+  .overlay .tip.muted,
+  .overlay .tip.error {
+    font-size: 13.5px;
+  }
+
+  .overlay.with-transcript .tip {
+    font-size: 16px;
+  }
+}
+
+@media (max-height: 160px) {
+  .overlay .stage {
+    padding-top: 5px;
+    padding-bottom: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay .edge.listening::after,
+  .overlay .tip.live,
+  .overlay .tip.pending .tip-main::after {
+    animation: none;
+  }
+}
+
+/* ================= Settings ================= */
+
+.settings-root {
+  color-scheme: light;
+  scrollbar-gutter: stable;
+  --gutter: 32px;
+  --nacht: #131c2b;
+  --oranje: #f5981b;
+  --signaal: #13a47c;
+  --signaal-hover: #22b88c;
+  --on-signaal: #131c2b;
+  --bg: #ffffff;
+  --text: #131c2b;
+  --muted: #71717a;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --field: #ffffff;
+  --chip: #f4f4f5;
+  --tint: #e7f7f1;
+  --tint-line: #c6e9da;
+  --tint-muted: #55555d;
+  --green-text: #0b7a5b;
+  --link: #0b7a5b;
+  --focus: #13a47c;
+  --warn: #8a5300;
+  --warn-bg: #fff4db;
+  --error: #b42318;
+  --error-bg: #fdeceb;
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-root {
+    color-scheme: dark;
+    --bg: #0e1520;
+    --text: #e6ecf4;
+    --muted: #9aa6b8;
+    --line: #223047;
+    --line-strong: #2e3d57;
+    --field: #0a1019;
+    --chip: #1a2436;
+    --tint: #10261f;
+    --tint-line: #1c4436;
+    --tint-muted: #aebacb;
+    --green-text: #4fcb9f;
+    --link: #5fd0a8;
+    --focus: #4fcb9f;
+    --warn: #f0c766;
+    --warn-bg: #3a2d10;
+    --error: #ff8a80;
+    --error-bg: #3d1a18;
+  }
+}
+
+body.settings {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Full-width bands with content kept to one reading column. */
+.settings .masthead,
+.settings .steps,
+.settings .wrap,
+.settings .dock {
+  padding-inline: max(var(--gutter), calc((100% - 680px) / 2));
+}
+
+/* ---- masthead ---- */
+
+.settings .masthead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+/* The mark is the overlay in miniature: a Nacht strip, the green edge, the tip, the orange question line. */
+.settings .mark {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--nacht);
+  box-shadow: inset 0 3px 0 var(--signaal);
+}
+
+.settings .mark::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 6px;
+  width: 30px;
+  height: 3px;
+  border-radius: 1px;
+  background: #f3f6fa;
+}
+
+.settings .mark::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 10px;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: #8693a6;
+}
+
+.settings .mark-line {
+  position: absolute;
+  top: 13px;
+  left: 6px;
+  width: 2px;
+  height: 4px;
+  background: var(--oranje);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings .mark {
+    outline: 1px solid var(--line-strong);
+  }
+}
+
+.settings h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+
+.settings .sub {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* ---- the three steps ---- */
+
+.settings .steps {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.settings .step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: -1px;
+  padding: 12px 2px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.settings .step.active {
+  border-bottom-color: var(--text);
+}
+
+.settings .step-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.settings .step:hover .step-num {
+  border-color: var(--muted);
+}
+
+.settings .step.active .step-num {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.settings .step-num svg {
+  display: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.settings .step[data-state="done"] .step-num {
+  color: var(--on-signaal);
+  background: var(--signaal);
+  border-color: var(--signaal);
+}
+
+.settings .step[data-state="done"] .step-num .n {
+  display: none;
+}
+
+.settings .step[data-state="done"] .step-num svg {
+  display: block;
+}
+
+.settings .step-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.settings .step-title {
+  font-size: 14px;
+  font-weight: 560;
+}
+
+.settings .step.active .step-title {
+  font-weight: 650;
+}
+
+.settings .step-state {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.settings .step[data-state="done"] .step-state {
+  color: var(--green-text);
+}
+
+.settings .step[data-state="missing"] .step-state {
+  color: var(--warn);
+}
+
+/* ---- step content ---- */
+
+.settings .wrap {
+  flex: 1 0 auto;
+  width: 100%;
+  padding-top: 26px;
+  padding-bottom: 36px;
+}
+
+.settings h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.settings .lede {
+  max-width: 62ch;
+  margin: 0 0 18px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.settings h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.settings h4 {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.settings p {
+  margin: 0 0 10px;
+}
+
+/* The one tinted block per step: the first thing to do. */
+.settings .lead-block {
+  --muted: var(--tint-muted);
+  padding: 16px 18px 14px;
+  border-radius: 10px;
+  background: var(--tint);
+}
+
+.settings .group {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.settings .group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings .group-head h3 {
+  margin-bottom: 4px;
+}
+
+.settings .field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.settings label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings input[type="text"],
+.settings input[type="password"],
+.settings select,
+.settings textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  font: inherit;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+}
+
+.settings input::placeholder,
+.settings textarea::placeholder {
+  color: var(--muted);
+}
+
+.settings input:hover,
+.settings select:hover,
+.settings textarea:hover {
+  border-color: var(--muted);
+}
+
+.settings textarea {
+  display: block;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.settings textarea.mono {
+  margin-top: 10px;
+  font-size: 12.5px;
+}
+
+.settings :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.settings input:focus-visible,
+.settings select:focus-visible,
+.settings textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--focus);
+}
+
+.settings select:disabled {
+  opacity: 0.6;
+}
+
+.settings button {
+  height: 40px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.settings button:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+.settings button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.settings button.primary {
+  color: var(--on-signaal);
+  background: var(--signaal);
+  border-color: var(--signaal);
+}
+
+.settings button.primary:hover:not(:disabled) {
+  background: var(--signaal-hover);
+  border-color: var(--signaal-hover);
+}
+
+.settings button.ghost {
+  background: transparent;
+}
+
+.settings button.linkbtn {
+  height: auto;
+  padding: 0 2px;
+  font-size: inherit;
+  color: var(--link);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.settings button.linkbtn:hover:not(:disabled) {
+  text-decoration-thickness: 2px;
+}
+
+.settings .chatgpt-btn {
+  margin-top: 10px;
+  padding: 0 20px;
+  color: #ffffff;
+  background: #0d0d0d;
+  border-color: #0d0d0d;
+  border-radius: 999px;
+}
+
+.settings .chatgpt-btn:hover:not(:disabled) {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings .chatgpt-btn {
+    color: #0d0d0d;
+    background: #ffffff;
+    border-color: #ffffff;
+  }
+
+  .settings .chatgpt-btn:hover:not(:disabled) {
+    background: #e6e6e6;
+    border-color: #e6e6e6;
+  }
+}
+
+/* Language / Taal: the first choice of step 1, above everything else. */
+.settings .lang-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0 0 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings .lang-field select {
+  width: auto;
+  min-width: 170px;
+}
+
+.settings .lang-field .hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.settings .grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+
+.settings .inline {
+  display: flex;
+  gap: 8px;
+}
+
+.settings .inline input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.settings .hint {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.settings .after-block {
+  margin-top: 8px;
+}
+
+.settings .url {
+  font-weight: 560;
+  color: var(--text);
+  user-select: all;
+}
+
+.settings .msg {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings .msg:empty {
+  display: none;
+}
+
+.settings .row .msg {
+  margin: 0;
+}
+
+.settings .msg.ok {
+  color: var(--green-text);
+}
+
+.settings .msg.warn {
+  color: var(--warn);
+}
+
+.settings .msg.error {
+  color: var(--error);
+}
+
+.settings .badge {
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+  background: var(--chip);
+  border-radius: 999px;
+}
+
+.settings .badge.ok {
+  color: var(--green-text);
+  background: var(--tint);
+}
+
+.settings .lead-block .badge {
+  background: rgba(19, 28, 43, 0.07);
+}
+
+.settings .lead-block .badge.ok {
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings .lead-block .badge {
+    background: rgba(255, 255, 255, 0.07);
+  }
+}
+
+.settings .key-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.settings .key-block .hint {
+  margin-top: 8px;
+}
+
+.settings .aside {
+  margin: 14px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--tint-line);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.settings .aside strong {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.settings .headset {
+  margin-top: 4px;
+  padding: 0;
+  border-top: 0;
+  font-size: 13px;
+}
+
+.settings .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.settings .check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--signaal);
+}
+
+.settings .check-field {
+  padding-top: 27px;
+}
+
+.settings .hotkeys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 18px;
+  margin: 4px 0 0;
+}
+
+.settings .hotkeys dt {
+  color: var(--muted);
+}
+
+.settings .hotkeys dd {
+  margin: 0;
+}
+
+.settings kbd {
+  padding: 2px 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--chip);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+
+/* ---- more options ---- */
+
+.settings details.more > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 2px 0;
+  font-weight: 650;
+  list-style: none;
+  cursor: pointer;
+}
+
+.settings details.more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings details.more > summary::before {
+  content: "";
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  margin: 0 2px 0 1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.settings details.more[open] > summary::before {
+  transform: rotate(45deg) translate(-2px, -1px);
+}
+
+.settings .summary-hint {
+  font-size: 12.5px;
+  font-weight: 450;
+  color: var(--muted);
+}
+
+.settings .sub-block {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.settings .sub-block > h4 + .grid2 {
+  margin-top: 10px;
+}
+
+.settings details.more > .sub-block:first-of-type {
+  margin-top: 14px;
+}
+
+.settings .cg-account {
+  margin: 8px 0 2px;
+}
+
+.settings #cgSharing {
+  margin: 0 0 12px;
+}
+
+.settings .plan-note {
+  font-weight: 600;
+  color: var(--green-text);
+}
+
+/* ---- profile ---- */
+
+.settings .howto {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings .howto-text {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.settings .howto .row {
+  margin-top: 0;
+}
+
+.settings .howto li:last-child .row {
+  margin-top: 10px;
+}
+
+.settings #profileFields {
+  margin-top: 14px;
+}
+
+.settings .profile-field {
+  margin-bottom: 16px;
+}
+
+.settings .profile-field .hint {
+  margin: 0 0 2px;
+}
+
+.settings .profile-field.empty label::after {
+  content: "leeg";
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-radius: 999px;
+}
+
+/* ---- the dock: always says whether you can start ---- */
+
+.settings .dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding-top: 13px;
+  padding-bottom: 14px;
+  color: #e6ecf4;
+  background: var(--nacht);
+  border-top: 3px solid #2a3750;
+}
+
+.settings .dock:has(.readiness.warn) {
+  border-top-color: #e8be4a;
+}
+
+.settings .dock:has(.readiness.ok) {
+  border-top-color: var(--signaal);
+}
+
+.settings .dock:has(.readiness.error) {
+  border-top-color: #f2685f;
+}
+
+.settings .readiness {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.settings .readiness strong {
+  font-size: 14px;
+  font-weight: 650;
+  color: #f3f6fa;
+}
+
+.settings #readyDetail {
+  font-size: 12.5px;
+  color: #aebacb;
+}
+
+.settings #readyDetail:empty {
+  display: none;
+}
+
+.settings .dock-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.settings .dock :focus-visible {
+  outline-color: #e6ecf4;
+}
+
+.settings .dock button {
+  color: #e6ecf4;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.settings .dock button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.settings .dock button.primary {
+  color: var(--nacht);
+  background: var(--signaal);
+  border-color: var(--signaal);
+}
+
+.settings .dock button.primary:hover:not(:disabled) {
+  background: var(--signaal-hover);
+  border-color: var(--signaal-hover);
+}
+
+.settings .dock .msg {
+  margin: 0 4px 0 0;
+  color: #aebacb;
+}
+
+.settings .dock .msg.ok {
+  color: #5fd0a8;
+}
+
+.settings .dock .msg.warn {
+  color: #e8be4a;
+}
+
+.settings .dock .msg.error {
+  color: #ff9a92;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings .dock {
+    background: #131c2b;
+  }
+}
+
+.settings .offscreen {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  opacity: 0;
+}
+
+@media (max-width: 600px) {
+  .settings-root {
+    --gutter: 18px;
+  }
+
+  .settings .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .settings .check-field {
+    padding-top: 0;
+  }
+
+  .settings .steps {
+    gap: 6px;
+  }
+
+  .settings .step-num {
+    display: none;
+  }
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <title>Salescoach</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="overlay">
+    <!-- The text below is English; overlay.ts fills it in the language of the settings (src/shared/i18n.ts). -->
+    <div id="edge" class="edge stopped" aria-hidden="true"></div>
+    <header class="bar">
+      <button id="listen" type="button" class="listen primary">Start</button>
+      <span id="status" class="status" role="status">Stopped</span>
+      <div class="tools">
+        <button id="tipBtn" type="button" class="quiet" data-i18n="overlay.tipNow">Tip now</button>
+        <label class="switch" data-i18n-title="overlay.autoTitle" title="Get a tip by itself after an objection, question or buying signal">
+          <input id="auto" type="checkbox" role="switch" />
+          <span class="track" aria-hidden="true"></span>
+          <span class="switch-text" data-i18n="overlay.auto">Auto</span>
+        </label>
+        <span class="divider" aria-hidden="true"></span>
+        <button id="transcriptBtn" type="button" class="icon" title="Show transcript" aria-label="Show transcript">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6" /></svg>
+        </button>
+        <button id="settingsBtn" type="button" class="icon" data-i18n-title="overlay.settings" data-i18n-aria="overlay.settings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5h5M10.5 5h3M2.5 11h2M7.5 11h6" /><circle cx="9" cy="5" r="1.5" /><circle cx="6" cy="11" r="1.5" /></svg>
+        </button>
+        <button id="hideBtn" type="button" class="icon" data-i18n-aria="overlay.hide" title="Hide (Ctrl+Shift+H)" aria-label="Hide">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8h8" /></svg>
+        </button>
+      </div>
+    </header>
+    <main class="stage">
+      <div id="tip" class="tip muted">Press Start when the call begins.</div>
+      <div id="transcript" class="transcript hidden" data-i18n-aria="overlay.transcript" aria-label="Transcript"></div>
+    </main>
+    <script type="module" src="overlay.js"></script>
+  </body>
+</html>

@@ -1,0 +1,337 @@
+[
+  {
+    "id": "price-too-expensive",
+    "category": "price",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "For the setup it's a one-off 1,500, and then 425 a month after that." },
+      { "speaker": "them", "text": "Oof. Yeah, to be honest that's quite a bit more than I expected." },
+      { "speaker": "them", "text": "That feels pretty expensive for what it is." }
+    ],
+    "expect": "Does not defend the price, but asks what the customer compares it with or what the problem costs them each month now.",
+    "shouldPass": false
+  },
+  {
+    "id": "price-silence",
+    "category": "price",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "So if you put it all together, you end up at 425 a month." },
+      { "speaker": "them", "text": "Hmm. Okay." }
+    ],
+    "expect": "Lets the silence after the price sit and adds nothing, or at most asks a short open question such as 'How does that sound to you?'.",
+    "shouldPass": false
+  },
+  {
+    "id": "price-discount",
+    "category": "price",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Then you're at 425 a month, and you can cancel every quarter." },
+      { "speaker": "them", "text": "Okay. And if we sign up for a full year right away, can you knock something off?" }
+    ],
+    "expect": "Does not give a discount straight away, but first checks whether the rest of the proposal fits, or offers a smaller start instead of a lower price.",
+    "shouldPass": false
+  },
+  {
+    "id": "think-it-over-1",
+    "category": "think-it-over",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "So the first step would be a four-week pilot." },
+      { "speaker": "them", "text": "Yeah. Yeah, I get it." },
+      { "speaker": "them", "text": "I think I just need to think it over a bit." }
+    ],
+    "expect": "Asks in a friendly way what exactly the customer still wants to think over, so the real objection (price, trust or someone else) comes out.",
+    "shouldPass": false
+  },
+  {
+    "id": "think-it-over-2",
+    "category": "think-it-over",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "You know what, let me sleep on it." },
+      { "speaker": "them", "text": "I'll get back to you sometime next week." },
+      { "speaker": "me", "text": "Sure, of course." }
+    ],
+    "expect": "Sets a concrete date for the follow-up right now and asks what is still in the way.",
+    "shouldPass": false
+  },
+  {
+    "id": "send-info",
+    "category": "send-info",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Shall I quickly show you what that would look like for you?" },
+      { "speaker": "them", "text": "No, you know what, just email me some information first." },
+      { "speaker": "them", "text": "Then I can take a look in my own time." }
+    ],
+    "expect": "Agrees, but asks what exactly the customer wants to see to move forward, and books a follow-up right away.",
+    "shouldPass": false
+  },
+  {
+    "id": "check-with-partner",
+    "category": "check-with-others",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "If you like, we could start as soon as next month." },
+      { "speaker": "them", "text": "Yeah, sounds good, but I really have to run this past my business partner first." }
+    ],
+    "expect": "Asks what the partner will want to know or push back on, and offers to join that conversation.",
+    "shouldPass": false
+  },
+  {
+    "id": "check-with-management",
+    "category": "check-with-others",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Personally I think it's a good plan." },
+      { "speaker": "them", "text": "But something like this has to go past the board, I can't decide that on my own." },
+      { "speaker": "me", "text": "Yeah, makes sense." }
+    ],
+    "expect": "Asks what the board needs to say yes, and offers a short summary or a joint call.",
+    "shouldPass": false
+  },
+  {
+    "id": "do-it-ourselves",
+    "category": "do-it-ourselves",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "We take the whole lead follow-up off your hands." },
+      { "speaker": "them", "text": "Right, but to be honest we just do that ourselves now. Our sales team calls everyone back." }
+    ],
+    "expect": "Asks how well that works now and how many hours a week it costs the sales team, without knocking their approach.",
+    "shouldPass": false
+  },
+  {
+    "id": "build-it-ourselves",
+    "category": "do-it-ourselves",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "I've got a nephew who's pretty handy with that kind of stuff." },
+      { "speaker": "them", "text": "I reckon he could put something like that together too, right?" },
+      { "speaker": "me", "text": "Yeah, he might." }
+    ],
+    "expect": "Acknowledges that and asks who maintains it when something breaks, and what it costs if it is down for a week.",
+    "shouldPass": false
+  },
+  {
+    "id": "already-have-agency-1",
+    "category": "already-have-agency",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "We actually already work with a marketing agency." },
+      { "speaker": "them", "text": "They do some automation stuff as well, I think." }
+    ],
+    "expect": "Asks how happy they are with that and what is still left undone, without knocking the other agency.",
+    "shouldPass": false
+  },
+  {
+    "id": "already-have-agency-2",
+    "category": "already-have-agency",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "How is that set up for you at the moment?" },
+      { "speaker": "them", "text": "Well, we have a regular IT company, they basically do everything for us." },
+      { "speaker": "them", "text": "So I'm not sure we want another supplier on top of that." }
+    ],
+    "expect": "Positions the service as an addition that takes work off their plate, and asks what the IT company does not pick up now.",
+    "shouldPass": false
+  },
+  {
+    "id": "bad-experience-1",
+    "category": "bad-experience",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Look, last year we had something like this built as well." },
+      { "speaker": "them", "text": "Cost us a few thousand and in the end nobody used it." }
+    ],
+    "expect": "Names that they got burned (a label), asks what went wrong back then and what has to be different now.",
+    "shouldPass": false
+  },
+  {
+    "id": "bad-experience-2",
+    "category": "bad-experience",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Honestly, I'm a bit fed up with all these AI promises." },
+      { "speaker": "them", "text": "Everyone says it solves everything and then it always disappoints." }
+    ],
+    "expect": "Acknowledges the doubt with a label and suggests starting small with a result that can be measured.",
+    "shouldPass": false
+  },
+  {
+    "id": "timing-1",
+    "category": "timing",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "It sounds interesting, but now really isn't a good time." },
+      { "speaker": "them", "text": "We're right in the middle of our busy season, maybe after the summer." }
+    ],
+    "expect": "Asks what will be different after the summer and what each month of waiting costs now.",
+    "shouldPass": false
+  },
+  {
+    "id": "timing-2",
+    "category": "timing",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Roughly when would you want to get started?" },
+      { "speaker": "them", "text": "Phew, probably not until next year. We still have to roll out our new CRM first." }
+    ],
+    "expect": "Asks when the CRM goes live and whether it would be smart to include the automation in that, and books a follow-up moment.",
+    "shouldPass": false
+  },
+  {
+    "id": "does-it-work-1",
+    "category": "does-it-work",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Yeah, but does this actually work?" },
+      { "speaker": "them", "text": "Because on paper everything sounds great, of course." }
+    ],
+    "expect": "Mentions a concrete result from the profile or suggests a small pilot with a clear measure of success, without making anything up.",
+    "shouldPass": false
+  },
+  {
+    "id": "does-it-work-2",
+    "category": "does-it-work",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Have you done this before for a company like ours?" },
+      { "speaker": "them", "text": "A trades business, I mean, with engineers out on the road." }
+    ],
+    "expect": "Only mentions a matching case if it is in the profile, otherwise says honestly that the user will check, plus a question about their situation.",
+    "shouldPass": false
+  },
+  {
+    "id": "privacy-1",
+    "category": "privacy",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "So where does all that data about our customers actually end up?" },
+      { "speaker": "them", "text": "Because with GDPR we really have to be careful about that." }
+    ],
+    "expect": "Only gives an answer that is in the profile (such as a data processing agreement or storage in the EU), and otherwise has the user promise to find out and email it.",
+    "shouldPass": false
+  },
+  {
+    "id": "privacy-2",
+    "category": "privacy",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Our lawyer is going to look at this either way." },
+      { "speaker": "them", "text": "Mostly at the AI part. Do you train on our data or something?" },
+      { "speaker": "me", "text": "Good question." }
+    ],
+    "expect": "Promises nothing that is not in the profile, offers to send the details in writing to the lawyer and asks what exactly they want to see.",
+    "shouldPass": false
+  },
+  {
+    "id": "buying-signal-1",
+    "category": "buying-signal",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "That's how it works, in short." },
+      { "speaker": "them", "text": "Okay, clear. How soon could we actually get started?" }
+    ],
+    "expect": "Assumes the sale and suggests a concrete start date or first step, for example a choice between two dates.",
+    "shouldPass": false
+  },
+  {
+    "id": "buying-signal-2",
+    "category": "buying-signal",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Say we go ahead, what would you need from us to get started?" }
+    ],
+    "expect": "Names the first step briefly and moves toward the decision, for example who should be at the kickoff and when.",
+    "shouldPass": false
+  },
+  {
+    "id": "factual-1",
+    "category": "factual-question",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Does this work with HubSpot too? Because that's where all our customer data lives." }
+    ],
+    "expect": "Gives the answer if it is in the profile, and otherwise has the user say they will check and email it today.",
+    "shouldPass": false
+  },
+  {
+    "id": "factual-2",
+    "category": "factual-question",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "And how long does it take before it's all up and running?" },
+      { "speaker": "me", "text": "Uh, let me see." }
+    ],
+    "expect": "Gives the lead time from the profile in one sentence, or has the user promise to check exactly and email it.",
+    "shouldPass": false
+  },
+  {
+    "id": "smalltalk-weather",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Good morning! How's your day going so far?" },
+      { "speaker": "them", "text": "Yeah, fine, thanks. Awful weather out there though, it's been raining all morning again." }
+    ],
+    "expect": "Answers PASS: ordinary small talk with no objection, buying signal or question.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-connection",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Hang on, I can't hear you very well." },
+      { "speaker": "them", "text": "Let me sort out my headphones. There we go, can you hear me now?" }
+    ],
+    "expect": "Answers PASS: technical chat about the connection, the question is not a sales question.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-holiday",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Did you get away at all this summer?" },
+      { "speaker": "them", "text": "Yeah, two weeks in France with the kids. It was lovely, but now it's straight back to full speed." }
+    ],
+    "expect": "Answers PASS: personal small talk at the start of the call.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-late",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Sorry I'm a few minutes late, my last meeting ran over a bit." }
+    ],
+    "expect": "Answers PASS: an apology before the start, not a moment for a tip.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-car",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Hi Sandra, good to finally catch you." },
+      { "speaker": "them", "text": "Yeah, I'm in the car right now, so I've got you on speaker." }
+    ],
+    "expect": "Answers PASS: a practical remark with no objection or buying signal.",
+    "shouldPass": true
+  },
+  {
+    "id": "neutral-agreement",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "And then those requests land in your shared inbox automatically." },
+      { "speaker": "them", "text": "Yeah, okay, I'm still with you." }
+    ],
+    "expect": "Answers PASS: neutral agreement during the explanation, nothing to react to.",
+    "shouldPass": true
+  }
+]

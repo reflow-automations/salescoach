@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-tests/
+dist-eval/
+release/
+.env
+.env.*
+!.env.example
+*.log
+# Personal profiles never go in git
+profiles/
+evals/results/
+dist-preview/
+design/shots/
+design/

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en" class="settings-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Salescoach settings</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="settings">
+    <!--
+      The text below is English. settings.ts fills every element with a data-i18n attribute in the
+      language of the settings (src/shared/i18n.ts). Fixed on purpose in both languages: "Language / Taal",
+      the language names, product names and "Continue with ChatGPT".
+    -->
+    <header class="masthead">
+      <span class="mark" aria-hidden="true"><span class="mark-line"></span></span>
+      <div class="masthead-text">
+        <h1>Salescoach</h1>
+        <p class="sub" data-i18n="settings.sub">Your live sales coach. Only you see the tips, also when you share your screen.</p>
+      </div>
+    </header>
+
+    <nav class="steps" role="tablist" data-i18n-aria="settings.stepsAria" aria-label="Set up in three steps">
+      <button type="button" class="tab step" role="tab" id="tab-conn" data-tab="conn" aria-controls="panel-conn">
+        <span class="step-num" aria-hidden="true"><span class="n">1</span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>
+        <span class="step-text"><span class="step-title" data-i18n="step.conn">Connect</span><span id="stepConn" class="step-state">Loading...</span></span>
+      </button>
+      <button type="button" class="tab step" role="tab" id="tab-profile" data-tab="profile" aria-controls="panel-profile">
+        <span class="step-num" aria-hidden="true"><span class="n">2</span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>
+        <span class="step-text"><span class="step-title" data-i18n="step.profile">Profile</span><span id="stepProfile" class="step-state">Loading...</span></span>
+      </button>
+      <button type="button" class="tab step" role="tab" id="tab-call" data-tab="call" aria-controls="panel-call">
+        <span class="step-num" aria-hidden="true"><span class="n">3</span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>
+        <span class="step-text"><span class="step-title" data-i18n="step.call">This call</span><span id="stepCall" class="step-state">Loading...</span></span>
+      </button>
+    </nav>
+
+    <main class="wrap">
+      <!-- 1. Connect -->
+      <section id="panel-conn" class="tabpanel" role="tabpanel" aria-labelledby="tab-conn">
+        <div class="lang-field">
+          <label for="language">Language / Taal</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+          </select>
+          <p class="hint" data-i18n="conn.languageHint">Sets the app, the tips and the language the coach listens for.</p>
+        </div>
+
+        <h2 data-i18n="conn.title">Give Salescoach ears and a brain</h2>
+        <p class="lede" data-i18n="conn.lede">The ears turn the call into text, the brain writes the tips. One free Gemini key is enough for both.</p>
+
+        <div class="lead-block key-block">
+          <div class="key-head">
+            <label for="geminiKey" data-i18n="label.geminiKey">Gemini API key</label>
+            <span id="geminiKeyState" class="badge"></span>
+          </div>
+          <div class="inline">
+            <input id="geminiKey" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="conn.geminiKeyPlaceholder" placeholder="Paste your Gemini key here" />
+            <button type="button" id="geminiKeySave" class="primary" data-i18n="common.save">Save</button>
+          </div>
+          <p class="hint">
+            <span data-i18n="conn.noKeyYet">No key yet? Make one for free at</span> <span class="url">aistudio.google.com/apikey</span>
+            <button type="button" class="linkbtn" data-copy="https://aistudio.google.com/apikey" data-i18n="common.copyLink">Copy link</button>
+          </p>
+          <p id="geminiKeyMsg" class="msg" aria-live="polite"></p>
+          <p class="aside"><strong data-i18n="conn.privacyStrong">Privacy:</strong> <span data-i18n="conn.privacyText">with a free Gemini key, Google may use your data to improve its products. Use a paid key for real customer calls. Salescoach does not store transcripts.</span></p>
+        </div>
+        <p class="hint after-block" data-i18n="conn.keysStored">Keys are stored encrypted on this PC and never shown again. Saving an empty field removes the key.</p>
+
+        <section class="group">
+          <h3 data-i18n="conn.earsBrainTitle">Ears and brain</h3>
+          <div class="grid2">
+            <div class="field">
+              <label for="ears" data-i18n="conn.earsLabel">Ears (speech to text)</label>
+              <select id="ears">
+                <option value="gemini" data-i18n="conn.earsGemini">Gemini (recommended, free key)</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="brain" data-i18n="conn.brainLabel">Brain (tips)</label>
+              <select id="brain">
+                <option value="gemini">Gemini</option>
+                <option value="openai-key" data-i18n="label.openaiKey">OpenAI API key</option>
+                <option value="chatgpt" data-i18n="label.chatgptPlan">ChatGPT plan</option>
+              </select>
+            </div>
+          </div>
+          <p id="brainHint" class="hint"></p>
+        </section>
+
+        <section class="group">
+          <h3 data-i18n="conn.duringCallTitle">During the call</h3>
+          <div class="field">
+            <label class="check"><input id="autoTips" type="checkbox" /> <span data-i18n="conn.autoTips">Automatic tips</span></label>
+            <p class="hint" data-i18n="conn.autoTipsHint">After an objection, question or buying signal. Otherwise you only get a tip when you ask.</p>
+          </div>
+          <dl class="hotkeys">
+            <dt data-i18n="overlay.tipNow">Tip now</dt>
+            <dd><kbd id="hkHelp"></kbd></dd>
+            <dt data-i18n="conn.hkToggle">Show or hide the overlay</dt>
+            <dd><kbd id="hkToggle"></kbd></dd>
+          </dl>
+        </section>
+
+        <details id="moreOptions" class="group more">
+          <summary><span data-i18n="conn.moreSummary">OpenAI, ChatGPT plan and models</span> <span class="summary-hint" data-i18n="conn.moreHint">Not needed with a Gemini key</span></summary>
+
+          <div class="key-block sub-block">
+            <div class="key-head">
+              <label for="openaiKey" data-i18n="label.openaiKey">OpenAI API key</label>
+              <span id="openaiKeyState" class="badge"></span>
+            </div>
+            <div class="inline">
+              <input id="openaiKey" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="conn.openaiKeyPlaceholder" placeholder="Paste your OpenAI key here" />
+              <button type="button" id="openaiKeySave" data-i18n="common.save">Save</button>
+            </div>
+            <p class="hint">
+              <span data-i18n="conn.openaiMakeKey">Make a key at</span> <span class="url">platform.openai.com/api-keys</span>
+              <button type="button" class="linkbtn" data-copy="https://platform.openai.com/api-keys" data-i18n="common.copyLink">Copy link</button>
+            </p>
+            <p id="openaiKeyMsg" class="msg" aria-live="polite"></p>
+          </div>
+
+          <div id="chatgptCard" class="sub-block">
+            <h4 data-i18n="label.chatgptPlan">ChatGPT plan</h4>
+            <p class="hint" data-i18n="cg.hint">Use your own ChatGPT plan as the brain, without an API key.</p>
+
+            <div id="cgOut">
+              <button type="button" id="cgSignIn" class="chatgpt-btn">Continue with ChatGPT</button>
+              <p id="cgProgress" class="msg" aria-live="polite"></p>
+            </div>
+
+            <div id="cgIn" hidden>
+              <p class="cg-account"><span data-i18n="cg.signedInAs">Signed in as</span> <strong id="cgEmail"></strong></p>
+              <p id="cgSharing" class="msg"></p>
+              <div class="field">
+                <label for="chatgptModel" data-i18n="cg.model">Model</label>
+                <select id="chatgptModel"></select>
+                <p id="cgPlanNote" class="hint plan-note" data-i18n="cg.planNote" hidden>Uses your ChatGPT plan</p>
+              </div>
+              <div class="row">
+                <button type="button" id="cgUsage" data-i18n="cg.manageUsage">Manage usage</button>
+                <button type="button" id="cgSignOut" class="ghost" data-i18n="cg.signOut">Sign out</button>
+              </div>
+              <p id="cgMsg" class="msg" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <div class="sub-block">
+            <h4 data-i18n="conn.models">Models</h4>
+            <div class="grid2">
+              <div class="field">
+                <label for="geminiModel" data-i18n="conn.geminiModel">Gemini model (brain)</label>
+                <input id="geminiModel" type="text" spellcheck="false" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="openaiModel" data-i18n="conn.openaiModel">OpenAI model (brain with API key)</label>
+                <input id="openaiModel" type="text" spellcheck="false" autocomplete="off" />
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- 2. Profile -->
+      <section id="panel-profile" class="tabpanel" role="tabpanel" aria-labelledby="tab-profile" hidden>
+        <h2 data-i18n="profile.title">Tell the coach who you are</h2>
+        <p class="lede" data-i18n="profile.lede">Your own ChatGPT or Claude already knows you. Let it write your profile, so you hardly have to type anything here.</p>
+
+        <div class="lead-block">
+          <ol class="howto">
+            <li>
+              <span class="howto-text" data-i18n="profile.step1">Copy the prompt and paste it into ChatGPT or Claude.</span>
+              <div class="row">
+                <button type="button" id="copyPrompt" class="primary" data-i18n="profile.copyPrompt">Copy profile prompt</button>
+                <span id="copyMsg" class="msg" aria-live="polite"></span>
+              </div>
+              <textarea id="promptFallback" class="mono" rows="6" readonly hidden></textarea>
+            </li>
+            <li>
+              <label for="importText" class="howto-text" data-i18n="profile.step2">Paste the whole answer back here and import it.</label>
+              <textarea id="importText" rows="5" data-i18n-placeholder="profile.importPlaceholder" placeholder="Paste the whole answer, including the lines with ==="></textarea>
+              <div class="row">
+                <button type="button" id="importBtn" data-i18n="profile.import">Import</button>
+                <span id="importMsg" class="msg" aria-live="polite"></span>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <section class="group">
+          <div class="group-head">
+            <h3 data-i18n="profile.yours">Your profile</h3>
+            <span id="profileCount" class="badge"></span>
+          </div>
+          <p class="hint" data-i18n="profile.onlyWhatsHere">The coach only uses what is here. It never makes up prices, cases or promises.</p>
+          <div id="profileFields"></div>
+        </section>
+      </section>
+
+      <!-- 3. This call -->
+      <section id="panel-call" class="tabpanel" role="tabpanel" aria-labelledby="tab-call" hidden>
+        <h2 data-i18n="call.title">Brief the coach for this call</h2>
+        <p class="lede" data-i18n="call.lede">Fill this in 2 minutes before the call. The coach uses it right away for the next tip.</p>
+        <div class="field">
+          <label for="brief" data-i18n="call.briefLabel">Brief</label>
+          <textarea
+            id="brief"
+            rows="13"
+            data-i18n-placeholder="call.briefPlaceholder"
+            placeholder="Who are you talking to? Name and role.&#10;Which company, and what do they do?&#10;What is your goal for this call?&#10;What do you already know? Pains, budget, earlier contact."
+          ></textarea>
+        </div>
+        <p class="aside headset"><strong data-i18n="call.headsetStrong">Use a headset.</strong> <span data-i18n="call.headsetText">Otherwise your microphone also hears the other person, and the coach mixes the two of you up.</span></p>
+      </section>
+    </main>
+
+    <footer class="dock">
+      <div id="readiness" class="readiness" aria-live="polite">
+        <strong id="readyTitle">Loading...</strong>
+        <span id="readyDetail"></span>
+      </div>
+      <div class="dock-actions" data-for="conn">
+        <span id="settingsMsg" class="msg" aria-live="polite"></span>
+        <button type="button" id="saveSettings" class="ghost" data-i18n="common.save">Save</button>
+        <button type="button" class="next" data-next="profile" data-i18n="conn.next">Next: your profile</button>
+      </div>
+      <div class="dock-actions" data-for="profile" hidden>
+        <span id="profileMsg" class="msg" aria-live="polite"></span>
+        <button type="button" id="saveProfile" class="ghost" data-i18n="profile.save">Save profile</button>
+        <button type="button" class="next" data-next="call" data-i18n="profile.next">Next: this call</button>
+      </div>
+      <div class="dock-actions" data-for="call" hidden>
+        <span id="briefMsg" class="msg" aria-live="polite"></span>
+        <button type="button" id="clearBrief" class="ghost" data-i18n="call.clear">Clear for a new call</button>
+        <button type="button" id="saveBrief" class="primary" data-i18n="common.save">Save</button>
+      </div>
+    </footer>
+    <script type="module" src="settings.js"></script>
+  </body>
+</html>

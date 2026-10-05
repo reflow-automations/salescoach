@@ -1,0 +1,337 @@
+[
+  {
+    "id": "prijs-te-duur",
+    "category": "prijs",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Voor de opzet reken ik eenmalig 1.500 euro, en daarna 425 per maand." },
+      { "speaker": "them", "text": "Oef. Ja, dat is eerlijk gezegd een stuk meer dan ik had verwacht." },
+      { "speaker": "them", "text": "Dat vind ik best wel duur voor wat het is." }
+    ],
+    "expect": "Verdedigt de prijs niet, maar vraagt waarmee de klant het vergelijkt of wat het probleem nu per maand kost.",
+    "shouldPass": false
+  },
+  {
+    "id": "prijs-stilte",
+    "category": "prijs",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "Dus als je alles bij elkaar neemt, kom je uit op 425 euro per maand." },
+      { "speaker": "them", "text": "Hmm. Oké." }
+    ],
+    "expect": "Laat de stilte na de prijs vallen en voegt niets toe, of stelt hooguit een korte open vraag zoals 'Hoe klinkt dat voor je?'.",
+    "shouldPass": false
+  },
+  {
+    "id": "prijs-korting",
+    "category": "prijs",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Dan zit je op 425 per maand, en dat is per kwartaal opzegbaar." },
+      { "speaker": "them", "text": "Oké. En als we nou meteen voor een heel jaar tekenen, kan er dan nog wat vanaf?" }
+    ],
+    "expect": "Geeft niet meteen korting weg, maar checkt eerst of de rest van het voorstel klopt of biedt een kleinere start in plaats van een lagere prijs.",
+    "shouldPass": false
+  },
+  {
+    "id": "nadenken-1",
+    "category": "nadenken",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Dus de eerste stap zou een pilot van vier weken zijn." },
+      { "speaker": "them", "text": "Ja. Ja, ik snap het." },
+      { "speaker": "them", "text": "Ik moet er gewoon nog even over nadenken, denk ik." }
+    ],
+    "expect": "Vraagt vriendelijk wat de klant specifiek nog wil overdenken, zodat het echte bezwaar (prijs, vertrouwen of iemand anders) boven tafel komt.",
+    "shouldPass": false
+  },
+  {
+    "id": "nadenken-2",
+    "category": "nadenken",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Weet je wat, ik laat het even bezinken." },
+      { "speaker": "them", "text": "Ik kom er volgende week wel bij je op terug." },
+      { "speaker": "me", "text": "Prima, natuurlijk." }
+    ],
+    "expect": "Prikt nu al een concrete datum voor het vervolg en vraagt wat er nog in de weg zit.",
+    "shouldPass": false
+  },
+  {
+    "id": "info-sturen",
+    "category": "info-sturen",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Zal ik je even laten zien hoe dat er bij jullie uit zou zien?" },
+      { "speaker": "them", "text": "Nee, weet je wat, stuur eerst maar wat informatie op de mail." },
+      { "speaker": "them", "text": "Dan kijk ik er rustig naar." }
+    ],
+    "expect": "Gaat akkoord, maar vraagt wat de klant precies wil zien om verder te kunnen en plant direct een vervolgafspraak.",
+    "shouldPass": false
+  },
+  {
+    "id": "overleggen-partner",
+    "category": "overleggen",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Als je wilt, kunnen we volgende maand al starten." },
+      { "speaker": "them", "text": "Ja, klinkt goed, maar dit moet ik echt eerst even met mijn compagnon bespreken." }
+    ],
+    "expect": "Vraagt wat de compagnon wil weten of waar die op aan zal slaan, en biedt aan bij dat gesprek aan te sluiten.",
+    "shouldPass": false
+  },
+  {
+    "id": "overleggen-directie",
+    "category": "overleggen",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Ik vind het zelf een goed plan, hoor." },
+      { "speaker": "them", "text": "Maar zoiets moet langs de directie, daar ga ik niet in m'n eentje over." },
+      { "speaker": "me", "text": "Ja, logisch." }
+    ],
+    "expect": "Vraagt wat de directie nodig heeft om ja te zeggen en biedt een korte samenvatting of een gezamenlijk gesprek aan.",
+    "shouldPass": false
+  },
+  {
+    "id": "zelf-doen",
+    "category": "zelf-doen",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Wij nemen die hele opvolging van je leads uit handen." },
+      { "speaker": "them", "text": "Ja, maar eerlijk gezegd doen we dat nu gewoon zelf. Onze binnendienst belt iedereen na." }
+    ],
+    "expect": "Vraagt hoe goed dat nu loopt en hoeveel uur het de binnendienst per week kost, zonder hun aanpak af te kraken.",
+    "shouldPass": false
+  },
+  {
+    "id": "zelf-bouwen",
+    "category": "zelf-doen",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Ik heb een neef die best handig is met dat soort dingen." },
+      { "speaker": "them", "text": "Die kan zoiets volgens mij ook wel in elkaar zetten, toch?" },
+      { "speaker": "me", "text": "Ja, dat zou kunnen." }
+    ],
+    "expect": "Erkent dat en vraagt wie het onderhoudt als het misgaat en wat het kost als het een week stilligt.",
+    "shouldPass": false
+  },
+  {
+    "id": "al-een-bureau-1",
+    "category": "al-een-bureau",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "We werken eigenlijk al met een marketingbureau." },
+      { "speaker": "them", "text": "Die doen ook wel wat met automatisering, geloof ik." }
+    ],
+    "expect": "Vraagt hoe tevreden ze daarover zijn en wat er nog blijft liggen, zonder het andere bureau af te kraken.",
+    "shouldPass": false
+  },
+  {
+    "id": "al-een-bureau-2",
+    "category": "al-een-bureau",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "me", "text": "Hoe is dat nu geregeld bij jullie?" },
+      { "speaker": "them", "text": "Nou, we hebben een vast IT-bedrijf, die doen eigenlijk alles voor ons." },
+      { "speaker": "them", "text": "Dus ik weet niet of we daar nog een partij naast willen." }
+    ],
+    "expect": "Positioneert de dienst als aanvulling die werk uit handen neemt en vraagt wat het IT-bedrijf nu niet oppakt.",
+    "shouldPass": false
+  },
+  {
+    "id": "slechte-ervaring-1",
+    "category": "slechte-ervaring",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Kijk, we hebben vorig jaar ook zoiets laten bouwen." },
+      { "speaker": "them", "text": "Heeft ons een paar duizend euro gekost en uiteindelijk gebruikte niemand het." }
+    ],
+    "expect": "Benoemt dat ze zich gebrand hebben (label), vraagt wat er toen misging en wat er nu anders moet.",
+    "shouldPass": false
+  },
+  {
+    "id": "slechte-ervaring-2",
+    "category": "slechte-ervaring",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Eerlijk gezegd ben ik een beetje klaar met al die AI-beloftes." },
+      { "speaker": "them", "text": "Iedereen roept dat het alles oplost en dan valt het altijd tegen." }
+    ],
+    "expect": "Erkent de scepsis met een label en stelt voor klein te beginnen met een meetbaar resultaat.",
+    "shouldPass": false
+  },
+  {
+    "id": "timing-1",
+    "category": "timing",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Het klinkt interessant, maar nu is echt geen goed moment." },
+      { "speaker": "them", "text": "We zitten midden in de drukte, misschien na de zomer." }
+    ],
+    "expect": "Vraagt wat er na de zomer anders is en wat elke maand uitstel nu kost.",
+    "shouldPass": false
+  },
+  {
+    "id": "timing-2",
+    "category": "timing",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Wanneer zou je ongeveer willen beginnen?" },
+      { "speaker": "them", "text": "Pff, ik denk pas volgend jaar. We moeten eerst ons nieuwe CRM nog invoeren." }
+    ],
+    "expect": "Vraagt wanneer het CRM live gaat en of het slim is de automatisering daar meteen in mee te nemen, en legt een vervolgmoment vast.",
+    "shouldPass": false
+  },
+  {
+    "id": "werkt-dit-wel-1",
+    "category": "werkt-dit-wel",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Ja, maar werkt dit nou echt?" },
+      { "speaker": "them", "text": "Want op papier klinkt alles natuurlijk fantastisch." }
+    ],
+    "expect": "Noemt een concreet resultaat uit het profiel of stelt een kleine pilot met een duidelijke succesmaat voor, zonder iets te verzinnen.",
+    "shouldPass": false
+  },
+  {
+    "id": "werkt-dit-wel-2",
+    "category": "werkt-dit-wel",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Hebben jullie dit al eens gedaan voor een bedrijf zoals het onze?" },
+      { "speaker": "them", "text": "Een installatiebedrijf bedoel ik, met monteurs op de weg." }
+    ],
+    "expect": "Noemt alleen een passende case als die in het profiel staat, anders eerlijk dat de gebruiker het nakijkt, plus een vraag naar hun situatie.",
+    "shouldPass": false
+  },
+  {
+    "id": "privacy-1",
+    "category": "privacy",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Waar komen al die gegevens van onze klanten dan eigenlijk terecht?" },
+      { "speaker": "them", "text": "Want met de AVG moeten we daar echt mee oppassen." }
+    ],
+    "expect": "Geeft alleen een antwoord dat in het profiel staat (zoals een verwerkersovereenkomst of opslag in de EU), en laat de gebruiker anders toezeggen het uit te zoeken en te mailen.",
+    "shouldPass": false
+  },
+  {
+    "id": "privacy-2",
+    "category": "privacy",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "Onze jurist gaat hier sowieso naar kijken." },
+      { "speaker": "them", "text": "Vooral naar dat AI-gedeelte. Wordt er met onze data getraind of zo?" },
+      { "speaker": "me", "text": "Goeie vraag." }
+    ],
+    "expect": "Belooft niets wat niet in het profiel staat, biedt aan de details schriftelijk naar de jurist te sturen en vraagt wat die precies wil zien.",
+    "shouldPass": false
+  },
+  {
+    "id": "koopsignaal-1",
+    "category": "koopsignaal",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Dat is in het kort hoe het werkt." },
+      { "speaker": "them", "text": "Oké, duidelijk. Hoe snel kunnen we eigenlijk starten?" }
+    ],
+    "expect": "Gaat uit van de verkoop en stelt een concrete startdatum of eerste stap voor, bijvoorbeeld een keuze tussen twee data.",
+    "shouldPass": false
+  },
+  {
+    "id": "koopsignaal-2",
+    "category": "koopsignaal",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Stel dat we het doen, wat hebben jullie dan van ons nodig om te beginnen?" }
+    ],
+    "expect": "Noemt kort de eerste stap en vraagt door naar de beslissing, bijvoorbeeld wie er bij de kickoff moet zijn en wanneer.",
+    "shouldPass": false
+  },
+  {
+    "id": "feitelijk-1",
+    "category": "feitelijke-vraag",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Werkt dit ook met HubSpot? Want daar zit al onze klantdata in." }
+    ],
+    "expect": "Geeft het antwoord als het in het profiel staat, en laat de gebruiker anders zeggen dat hij het checkt en vandaag mailt.",
+    "shouldPass": false
+  },
+  {
+    "id": "feitelijk-2",
+    "category": "feitelijke-vraag",
+    "trigger": "hotkey",
+    "lines": [
+      { "speaker": "them", "text": "En hoe lang duurt het voordat het allemaal draait?" },
+      { "speaker": "me", "text": "Eh, even kijken." }
+    ],
+    "expect": "Geeft de doorlooptijd uit het profiel in een zin, of laat de gebruiker toezeggen het precies na te gaan en te mailen.",
+    "shouldPass": false
+  },
+  {
+    "id": "smalltalk-weer",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Goeiemorgen! Lukt het een beetje vandaag?" },
+      { "speaker": "them", "text": "Ja hoor, prima. Wel een rotweer buiten, het regent alweer de hele ochtend." }
+    ],
+    "expect": "Antwoordt PASS: gewone smalltalk zonder bezwaar, koopsignaal of vraag.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-verbinding",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Wacht, ik hoor je een beetje slecht." },
+      { "speaker": "them", "text": "Even mijn koptelefoon goed doen. Zo, hoor je mij nu wel?" }
+    ],
+    "expect": "Antwoordt PASS: technisch praatje over de verbinding, de vraag is geen verkoopvraag.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-vakantie",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Lekker weg geweest deze zomer?" },
+      { "speaker": "them", "text": "Ja, twee weken naar Frankrijk met de kinderen. Was heerlijk, maar nu weer volle bak aan de slag." }
+    ],
+    "expect": "Antwoordt PASS: persoonlijke smalltalk aan het begin van het gesprek.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-te-laat",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "them", "text": "Sorry dat ik een paar minuten later ben, de vorige afspraak liep een beetje uit." }
+    ],
+    "expect": "Antwoordt PASS: een verontschuldiging voor de start, geen moment voor een tip.",
+    "shouldPass": true
+  },
+  {
+    "id": "smalltalk-auto",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "Hoi Sandra, goed dat het gelukt is." },
+      { "speaker": "them", "text": "Ja, ik zit even in de auto hoor, dus ik heb je op de speaker." }
+    ],
+    "expect": "Antwoordt PASS: praktische mededeling zonder bezwaar of koopsignaal.",
+    "shouldPass": true
+  },
+  {
+    "id": "neutraal-instemming",
+    "category": "smalltalk",
+    "trigger": "auto",
+    "lines": [
+      { "speaker": "me", "text": "En dan komen die aanvragen automatisch in jullie gedeelde inbox terecht." },
+      { "speaker": "them", "text": "Ja, oké, dat volg ik nog wel." }
+    ],
+    "expect": "Antwoordt PASS: neutrale instemming tijdens de uitleg, niets om op te reageren.",
+    "shouldPass": true
+  }
+]
