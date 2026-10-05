@@ -22,7 +22,7 @@ const knobsRejected = new Set<string>();
 export function createOpenAIBrain(o: OpenAIBrainOptions): Brain {
   return async ({ instructions, input, signal, onDelta }) => {
     const token = await o.getToken();
-    const withKnobs = !o.planUsage && !knobsRejected.has(o.model);
+    const withKnobs = !knobsRejected.has(o.model);
     const body = (withKnobs: boolean) => {
       const b: Record<string, unknown> = {
         model: o.model,
@@ -32,9 +32,11 @@ export function createOpenAIBrain(o: OpenAIBrainOptions): Brain {
         store: false,
       };
       if (withKnobs) {
-        b.reasoning = { effort: "none" };
+        // Without these a ChatGPT model thinks for seconds before the first word.
+        b.reasoning = { effort: o.planUsage ? "low" : "none" };
         b.text = { verbosity: "low" };
-        b.max_output_tokens = 200;
+        // The plan flow rejects sampling fields such as max_output_tokens.
+        if (!o.planUsage) b.max_output_tokens = 200;
       }
       return JSON.stringify(b);
     };

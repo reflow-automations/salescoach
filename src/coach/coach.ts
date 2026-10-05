@@ -18,8 +18,8 @@ export interface CoachDeps {
 const CONTEXT_MS = 4 * 60 * 1000; // conversation window sent to the brain
 const MAX_LINES = 40;
 const STALE_INTERIM_MS = 30_000; // interim text without an update for 30 s lost its final (dropped socket)
-const AUTO_DEBOUNCE_MS = 900; // wait for THEM to finish their thought
-const AUTO_COOLDOWN_MS = 8000; // no new auto tip within 8 s of a tip that was shown
+const AUTO_DEBOUNCE_MS = 600; // wait for THEM to finish their thought
+const AUTO_COOLDOWN_MS = 5000; // a shown tip stays at least 5 s before an auto tip replaces it
 const AUTO_MIN_INTERVAL_MS = 3000; // at most one auto request per 3 s, also when the answer was PASS
 const MIN_WORDS_FOR_AUTO = 3;
 /** "No tip found" in English; with `language` the coach uses that language. */
@@ -50,6 +50,7 @@ export class Coach {
   private autoTimer: NodeJS.Timeout | null = null;
   private lastTipAt = 0;
   private lastAutoRequestAt = 0;
+  private autoPending = false;
   private tipCounter = 0;
   private readonly now: () => number;
 
@@ -62,6 +63,7 @@ export class Coach {
     this.segments = [];
     this.lastTipAt = 0;
     this.lastAutoRequestAt = 0;
+    this.autoPending = false;
   }
 
   onTranscript(e: TranscriptEvent): void {
@@ -76,18 +78,34 @@ export class Coach {
     }
     this.prune();
     if (e.final && e.speaker === "them" && this.deps.autoTips() && wordCount(e.text) >= MIN_WORDS_FOR_AUTO) {
-      if (this.autoTimer) clearTimeout(this.autoTimer);
-      this.autoTimer = setTimeout(() => {
-        this.autoTimer = null;
-        // Never cut off a tip that is already on screen, such as a slow hotkey tip.
-        if (this.inflight?.started) return;
-        const now = this.now();
-        if (now - this.lastTipAt >= AUTO_COOLDOWN_MS && now - this.lastAutoRequestAt >= AUTO_MIN_INTERVAL_MS) {
-          this.lastAutoRequestAt = now;
-          void this.requestTip("auto");
-        }
-      }, AUTO_DEBOUNCE_MS);
+      this.autoPending = true;
+      this.scheduleAuto(AUTO_DEBOUNCE_MS);
     }
+  }
+
+  /**
+   * Fires the pending auto tip as soon as it is allowed. A blocked tip is postponed, never
+   * dropped: an objection that lands during the cooldown or while a tip streams still gets
+   * its tip right after.
+   */
+  private scheduleAuto(minWait: number): void {
+    if (this.autoTimer) clearTimeout(this.autoTimer);
+    const now = this.now();
+    const wait = Math.max(minWait, this.lastTipAt + AUTO_COOLDOWN_MS - now, this.lastAutoRequestAt + AUTO_MIN_INTERVAL_MS - now);
+    this.autoTimer = setTimeout(() => {
+      this.autoTimer = null;
+      if (!this.autoPending || !this.deps.autoTips()) return;
+      // Never cut off a tip that is still streaming; the finally block of requestTip retries.
+      if (this.inflight?.started) return;
+      const t = this.now();
+      if (t - this.lastTipAt < AUTO_COOLDOWN_MS || t - this.lastAutoRequestAt < AUTO_MIN_INTERVAL_MS) {
+        this.scheduleAuto(0);
+        return;
+      }
+      this.autoPending = false;
+      this.lastAutoRequestAt = t;
+      void this.requestTip("auto");
+    }, Math.max(0, wait));
   }
 
   /** Conversation lines for the brain: consecutive segments of one speaker are merged. */
@@ -105,6 +123,7 @@ export class Coach {
 
   cancel(): void {
     this.abortInflight();
+    this.autoPending = false;
     if (this.autoTimer) clearTimeout(this.autoTimer);
     this.autoTimer = null;
   }
@@ -188,7 +207,10 @@ export class Coach {
       start();
       this.deps.emit({ kind: "error", id, message: err instanceof Error ? err.message : String(err) });
     } finally {
-      if (this.inflight === req) this.inflight = null;
+      if (this.inflight === req) {
+        this.inflight = null;
+        if (this.autoPending) this.scheduleAuto(0);
+      }
     }
   }
 

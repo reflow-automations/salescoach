@@ -389,11 +389,17 @@ async function saveSettings(feedback: boolean): Promise<void> {
   }
 }
 
-/** If a ChatGPT model list is available but none is chosen, pick the first one. */
+/** Fast models first: a live tip is useless when it arrives after the moment has passed. */
+export function fastestModel(models: { slug: string }[]): string {
+  const fast = models.find((m) => /mini|nano|instant|fast|flash|lite/i.test(m.slug));
+  return (fast ?? models[0]).slug;
+}
+
+/** If a ChatGPT model list is available but none is chosen, pick the fastest one. */
 async function ensureChatGPTModel(): Promise<void> {
   const cg = state.chatgpt;
   if (!cg.connected || !cg.sharing || !cg.models.length || state.settings.chatgptModel) return;
-  cgModelSel.value = cg.models[0].slug;
+  cgModelSel.value = fastestModel(cg.models);
   await saveSettings(false);
 }
 

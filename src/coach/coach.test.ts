@@ -426,7 +426,7 @@ test("an auto request never cuts off a running hotkey tip", async (t) => {
   assert.ok(!events.some((e) => e.id === "tip-2"));
 });
 
-test("the auto cooldown counts from the end of a slow tip", async (t) => {
+test("the auto cooldown counts from the end of a slow tip, and a blocked auto tip waits", async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   const gate = deferred();
   const slow = fakeBrain(["Vraag door."], { gate: gate.promise });
@@ -438,16 +438,15 @@ test("the auto cooldown counts from the end of a slow tip", async (t) => {
   clock.t += 10_000;
   gate.resolve();
   await p;
-  const say = (id: string) => {
-    coach.onTranscript(said("them", "En hoe zit het met de opzegtermijn?", id));
-    clock.t += 900;
-    t.mock.timers.tick(900);
+  const advance = (ms: number) => {
+    clock.t += ms;
+    t.mock.timers.tick(ms);
   };
-  clock.t += 5000;
-  say("t1"); // 5.9 s after the tip finished: still on screen
+  advance(3000);
+  coach.onTranscript(said("them", "En hoe zit het met de opzegtermijn?", "t1"));
+  advance(600); // 3.6 s after the tip finished: still on screen, so the auto tip waits
   assert.equal(auto.requests.length, 0);
-  clock.t += 2000;
-  say("t2"); // 8.8 s after it finished
+  advance(1400); // 5 s after it finished: the waiting tip fires
   assert.equal(auto.requests.length, 1);
   await flush();
 });
@@ -485,10 +484,10 @@ function autoSetup(t: TestContext, autoTips = true, chunks: string[] = ["PASS"])
   return { ...h, b, advance };
 }
 
-test("auto trigger fires 900 ms after a final THEM line with 3+ words", async (t) => {
+test("auto trigger fires 600 ms after a final THEM line with 3+ words", async (t) => {
   const { coach, b, advance } = autoSetup(t);
   coach.onTranscript(said("them", "Dat vind ik eigenlijk te duur.", "t1"));
-  advance(899);
+  advance(599);
   assert.equal(b.requests.length, 0);
   advance(1);
   assert.equal(b.requests.length, 1);
@@ -522,42 +521,39 @@ test("auto trigger fires when an interim THEM segment becomes final", async (t) 
   coach.onTranscript(said("them", "Ik moet er", "t1", false));
   advance(2000);
   coach.onTranscript(said("them", "Ik moet er nog even over nadenken.", "t1", true));
-  advance(900);
+  advance(600);
   assert.equal(b.requests.length, 1);
   await flush();
 });
 
-test("auto trigger is debounced: a new final THEM line restarts the 900 ms wait", async (t) => {
+test("auto trigger is debounced: a new final THEM line restarts the 600 ms wait", async (t) => {
   const { coach, b, advance } = autoSetup(t);
   coach.onTranscript(said("them", "Nou, dat is een hoop geld.", "t1"));
-  advance(500);
+  advance(400);
   coach.onTranscript(said("them", "Zeker voor een bedrijf als het onze.", "t2"));
-  advance(899);
+  advance(599);
   assert.equal(b.requests.length, 0);
   advance(1);
   assert.equal(b.requests.length, 1);
   assert.ok(b.requests[0].input.includes("THEM: Nou, dat is een hoop geld. Zeker voor een bedrijf als het onze."));
   advance(10_000);
-  assert.equal(b.requests.length, 1);
+  assert.equal(b.requests.length, 1, "one burst of speech gives one request");
   await flush();
 });
 
-test("auto trigger respects the 8 s cooldown after a shown tip", async (t) => {
+test("an objection during the 5 s cooldown is postponed, not dropped", async (t) => {
   const { coach, b, advance } = autoSetup(t, true, ["Vraag wat ze nu betalen."]);
   coach.onTranscript(said("them", "Wat kost dat eigenlijk per maand?", "t1"));
-  advance(900);
+  advance(600);
   assert.equal(b.requests.length, 1);
   await flush();
 
   advance(2000);
   coach.onTranscript(said("them", "En zit de installatie daarbij in?", "t2"));
-  advance(900); // 2.9 s after the last tip: suppressed
+  advance(600); // 2.6 s after the tip: it stays on screen
   assert.equal(b.requests.length, 1);
   await flush();
-
-  advance(5000);
-  coach.onTranscript(said("them", "En hoe zit het met de opzegtermijn?", "t3"));
-  advance(900); // 8.8 s after the last tip: allowed
+  advance(2400); // 5 s after the tip: the waiting objection gets its tip
   assert.equal(b.requests.length, 2);
   await flush();
 });
@@ -566,28 +562,27 @@ test("a hotkey tip also starts the auto cooldown", async (t) => {
   const { coach, b, advance } = autoSetup(t);
   await coach.requestTip("hotkey");
   coach.onTranscript(say3("them", "t1"));
-  advance(900);
+  advance(600);
   assert.equal(b.requests.length, 1, "only the hotkey request");
+  advance(4400);
+  assert.equal(b.requests.length, 2, "the auto tip follows after the cooldown");
   await flush();
 });
 
-test("an auto PASS does not start the 8 s cooldown, only the 3 s request limit", async (t) => {
+test("an auto PASS does not start the cooldown; the 3 s request limit only delays", async (t) => {
   const { coach, b, advance, events } = autoSetup(t);
   coach.onTranscript(said("them", "Leuk dat het gelukt is om af te spreken.", "t1"));
-  advance(900);
+  advance(600);
   await flush();
   assert.equal(b.requests.length, 1);
   assert.ok(!events.some((e) => e.kind === "start"), "PASS shows nothing");
 
   advance(1000);
-  coach.onTranscript(said("them", "Het verkeer was wel erg druk vandaag.", "t2"));
-  advance(900); // 1.9 s after the last request: suppressed by the 3 s limit
+  coach.onTranscript(said("them", "Maar eerlijk gezegd vind ik het te duur.", "t2"));
+  advance(600); // 1.6 s after the last request: waits for the 3 s limit
   assert.equal(b.requests.length, 1);
   await flush();
-
-  advance(2000);
-  coach.onTranscript(said("them", "Maar eerlijk gezegd vind ik het te duur.", "t3"));
-  advance(900); // 4.8 s after the last request, no tip shown yet: allowed
+  advance(1400); // 3 s after the last request
   assert.equal(b.requests.length, 2, "objection shortly after a PASS still gets an auto tip");
   await flush();
 });

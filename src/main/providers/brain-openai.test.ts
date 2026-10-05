@@ -68,10 +68,10 @@ test("a knob 400 whose retry also fails is not remembered", async (t) => {
   assert.deepEqual(calls[2].reasoning, { effort: "none" }, "knobs are tried again");
 });
 
-test("ChatGPT-plan requests never send the knobs", async (t) => {
+test("ChatGPT-plan requests ask for low reasoning but never send sampling fields", async (t) => {
   const calls = stubFetch(t, () => ok());
   await ask("plan-model", true);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].reasoning, undefined);
+  assert.deepEqual(calls[0].reasoning, { effort: "low" });
   assert.equal(calls[0].max_output_tokens, undefined);
 });
