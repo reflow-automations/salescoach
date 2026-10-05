@@ -4,8 +4,11 @@
 
 Open source (MIT), Electron + TypeScript. Bring your own key, or use your ChatGPT plan.
 
-<!-- Add a screenshot at docs/screenshot.png, then remove the comment markers around the next line. -->
-<!-- ![Salescoach overlay on top of a video call](docs/screenshot.png) -->
+![The Salescoach overlay showing a tip](docs/screenshot.png)
+
+**Download:** the Windows installer is on the [Releases page](https://github.com/reflow-automations/salescoach/releases/latest). It is not code-signed yet, so Windows shows "Unknown publisher": click *More info*, then *Run anyway*.
+
+![Setup in three steps](docs/settings.png)
 
 ## What it looks like
 
@@ -75,7 +78,7 @@ You need:
 - A free Gemini key: https://aistudio.google.com/apikey
 
 ```
-git clone <repo-url> salescoach
+git clone https://github.com/reflow-automations/salescoach.git salescoach
 cd salescoach
 npm install
 npm start
@@ -171,7 +174,7 @@ Built by Rogier Helvensteijn, Reflow Automations.
 - **Zo werkt het.** Twee "oren": je microfoon (jij) en het geluid van je pc (de ander) worden apart live uitgeschreven, dus je hebt geen sprekerherkenning nodig. Eén "brein": een snel tekstmodel dat één korte tip schrijft. Automatische tips komen alleen na een bezwaar, een vraag of een koopsignaal. Anders blijft het stil. `Ctrl+Shift+Space` geeft altijd direct een tip, `Ctrl+Shift+H` verbergt het venster.
 - **Wat je nodig hebt.** Windows 10 versie 2004 of nieuwer, Node.js 22 of nieuwer, een headset en een gratis Gemini-key (aistudio.google.com/apikey). Of je ChatGPT-abonnement via "Sign in with ChatGPT". Claude-abonnementen mogen volgens Anthropic niet in apps van derden, een Claude API-key staat op de roadmap.
 - **Taal.** De app staat standaard in het Engels. Nederlands kies je in de instellingen, bovenaan stap 1 bij **Language / Taal**. Die ene keuze bepaalt de tekst van de app, de taal van de tips en de taal waarin de coach meeluistert. Beide vensters schakelen meteen om.
-- **Starten.** `git clone <repo-url> salescoach`, dan `npm install` en `npm start`. Open de instellingen (tandwiel), kies Nederlands bij Language / Taal, plak je key, vul je profiel in en druk op Start. Een installer maken kan met `npm run dist`, die komt in de map `release/`.
+- **Starten.** `git clone https://github.com/reflow-automations/salescoach.git salescoach`, dan `npm install` en `npm start`. Open de instellingen (tandwiel), kies Nederlands bij Language / Taal, plak je key, vul je profiel in en druk op Start. Een installer maken kan met `npm run dist`, die komt in de map `release/`.
 - **Profiel in 2 minuten.** Kopieer de profielprompt uit de instellingen, plak hem in ChatGPT of Claude (die kennen je al), plak het antwoord terug in het importvak en klik op Importeer. Een voorbeeld staat in [examples/profile-example.nl.md](examples/profile-example.nl.md), een voorbeeld van een gespreksbrief in [examples/call-brief-example.nl.md](examples/call-brief-example.nl.md).
 - **Privacy en wet.** Audio wordt nooit opgeslagen, transcripts blijven alleen in het geheugen. Keys staan versleuteld (Windows DPAPI). De gratis Gemini-laag mag data gebruiken om Google-producten te verbeteren, gebruik voor klantgesprekken dus een betaalde key. Check de wet in jouw land, bekijk of je een verwerkersovereenkomst nodig hebt, en zeg aan het begin van het gesprek dat je een AI-tool gebruikt voor notities. Draag een headset, anders hoort je microfoon de ander ook en komt die tekst bij jou terecht.
 - **Licentie.** MIT. Niet verbonden aan OpenAI, Google of Anthropic. Gebouwd door Rogier Helvensteijn, Reflow Automations.
