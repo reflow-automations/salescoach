@@ -249,8 +249,10 @@ function missingForStart(s: Settings, has: Record<SecretName, boolean>, cg: Chat
   const missing: MessageKey[] = [];
   const needGemini = s.ears === "gemini" || s.brain === "gemini";
   const needOpenAI = s.ears === "openai" || s.brain === "openai-key";
-  if (needGemini && !has.geminiKey) missing.push("missing.geminiKey");
-  if (needOpenAI && !has.openaiKey) missing.push("missing.openaiKey");
+  // With the ChatGPT plan only the ears need a key; say so, or people think the login was enough.
+  const earsOnly = s.brain === "chatgpt";
+  if (needGemini && !has.geminiKey) missing.push(earsOnly ? "missing.earsKeyChatgpt" : "missing.geminiKey");
+  if (needOpenAI && !has.openaiKey) missing.push(earsOnly ? "missing.earsKeyChatgpt" : "missing.openaiKey");
   if (s.brain === "chatgpt") {
     if (!cg.connected) missing.push("missing.chatgptSignIn");
     else if (!cg.sharing) missing.push("missing.chatgptSharing");
@@ -300,7 +302,7 @@ function renderProgress(): void {
   readinessEl.className = `readiness ${ready ? "ok" : "warn"}`;
   if (!ready) {
     readyTitle.textContent = tr("ready.notTitle");
-    readyDetail.textContent = tr("ready.needed", { items: joinList(lang, connMissing.map((k) => tr(k))) });
+    readyDetail.textContent = tr("ready.needed", { items: joinList(lang, connMissing.map((k) => tr(k, { label: tr(earsSel.value === "openai" ? "label.openaiKey" : "label.geminiKey") }))) });
     return;
   }
   readyTitle.textContent = tr("ready.title");
@@ -403,6 +405,13 @@ for (const input of [geminiModelInput, openaiModelInput]) {
   input.addEventListener("change", () => void saveSettings(true));
 }
 brainSel.addEventListener("change", renderStatus);
+// The ChatGPT plan cannot transcribe. Without an OpenAI key, the free Gemini ears are the only way to listen.
+brainSel.addEventListener("change", () => {
+  if (brainSel.value === "chatgpt" && earsSel.value === "openai" && !state.hasSecret.openaiKey) {
+    earsSel.value = "gemini";
+    void saveSettings(true);
+  }
+});
 saveSettingsBtn.addEventListener("click", () => void saveSettings(true));
 
 async function saveKey(name: SecretName): Promise<void> {

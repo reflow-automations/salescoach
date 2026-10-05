@@ -91,7 +91,12 @@ function earsSecret(): SecretName {
 function makeEars(generation: number): Record<Speaker, EarsSession> {
   // A closed session may still deliver text or errors for a few seconds; drop those.
   const live = () => listening && generation === earsGeneration;
-  const apiKey = requireSecret(earsSecret());
+  const needed = earsSecret();
+  if (settings.brain === "chatgpt" && !store.getSecret(needed)) {
+    // The ChatGPT plan only covers text (the tips); live transcription needs its own key.
+    throw new Error(tr("main.earsKeyChatgpt", { label: tr(needed === "openaiKey" ? "label.openaiKey" : "label.geminiKey") }));
+  }
+  const apiKey = requireSecret(needed);
   const make = (speaker: Speaker): EarsSession => {
     const opts: EarsOptions = {
       apiKey,

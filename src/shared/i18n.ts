@@ -52,6 +52,7 @@ const en = {
 
   // ---- main process ----
   "main.missingKey": "No {label} set. Open the settings.",
+  "main.earsKeyChatgpt": "Your ChatGPT plan only powers the tips. To listen, the app also needs a {label}. A free Gemini key is enough: open the settings.",
   "main.chooseChatgptModel": "Choose a ChatGPT model in the settings first.",
   "main.restartKept": "{error} Transcription goes on with the old settings.",
   "main.restarted": "Transcription restarted with the new settings.",
@@ -188,6 +189,7 @@ const en = {
   "missing.chatgptSignIn": "signing in with ChatGPT",
   "missing.chatgptSharing": "permission for ChatGPT plan usage",
   "missing.chatgptModel": "a ChatGPT model",
+  "missing.earsKeyChatgpt": "a {label} for listening (your ChatGPT plan only covers the tips)",
 
   // ---- settings: 2. profile ----
   "profile.title": "Tell the coach who you are",
@@ -290,6 +292,7 @@ const nl: Record<MessageKey, string> = {
   "overlay.them": "Zij",
 
   "main.missingKey": "Geen {label} ingesteld. Open de instellingen.",
+  "main.earsKeyChatgpt": "Je ChatGPT-abonnement doet alleen de tips. Om te luisteren heeft de app ook een {label} nodig. Een gratis Gemini-key is genoeg: open de instellingen.",
   "main.chooseChatgptModel": "Kies eerst een ChatGPT-model in de instellingen.",
   "main.restartKept": "{error} Transcriptie loopt door met de oude instellingen.",
   "main.restarted": "Transcriptie herstart met de nieuwe instellingen.",
@@ -417,6 +420,7 @@ const nl: Record<MessageKey, string> = {
   "missing.chatgptSignIn": "inloggen met ChatGPT",
   "missing.chatgptSharing": "toestemming voor ChatGPT-plangebruik",
   "missing.chatgptModel": "een ChatGPT-model",
+  "missing.earsKeyChatgpt": "een {label} om te luisteren (je ChatGPT-abonnement doet alleen de tips)",
 
   "profile.title": "Vertel de coach wie je bent",
   "profile.lede": "Je eigen ChatGPT of Claude kent je al. Laat die je profiel schrijven, dan hoef je hier bijna niets te typen.",

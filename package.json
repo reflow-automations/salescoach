@@ -1,6 +1,6 @@
 {
   "name": "salescoach",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Live AI sales coach overlay for Windows: listens to your calls and whispers short tips, invisible when you share your screen.",
   "main": "dist/main.js",
   "license": "MIT",
